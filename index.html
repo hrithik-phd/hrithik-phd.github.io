@@ -581,6 +581,7 @@ function renderDates(){
   $("#icsBtn").onclick=exportICS;
 }
 
+let eccvPapersOpen = new Set();
 function renderEccv(){
   const matches=[]; const mk=new Set();
   D.professors.filter(p=>!p.flags.note).forEach(p=>{
@@ -602,10 +603,17 @@ function renderEccv(){
   const nPlan=matches.filter(m=>pstate(m.p.id).eccv==="plan").length;
   const nMet=matches.filter(m=>pstate(m.p.id).eccv==="met").length;
   const prio=p=>`<span class="prio ${p||"C"}">${p||"?"}</span>`;
-  const papersHtml=e=>(e.paperIds||[]).slice(0,3).map(id=>{
-    const pp=ECCV.papers[id]; if(!pp) return "";
-    return `<div class="epaper">${esc(pp.title)}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
-  }).join("")+((e.paperIds||[]).length>3?`<div class="esess" style="margin-top:3px">+${e.paperIds.length-3} more papers</div>`:"");
+  const papersHtml=(e,pid)=>{
+    const ids=e.paperIds||[]; const open=eccvPapersOpen.has(pid);
+    const shown=open?ids:ids.slice(0,3);
+    const list=shown.map(id=>{
+      const pp=ECCV.papers[id]; if(!pp) return "";
+      return `<div class="epaper">${esc(pp.title)}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
+    }).join("");
+    const rest=ids.length-3;
+    const toggle = rest>0 ? `<button class="more" data-morepapers="${pid}">${open?"show fewer papers":`show ${rest} more paper${rest>1?"s":""}`}</button>` : "";
+    return list+toggle;
+  };
 
   $("#v-eccv").innerHTML = `
     <h2>Your targets at ECCV 2026</h2>
@@ -629,7 +637,9 @@ function renderEccv(){
         ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
         ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
         ${e.action?`<div class="stmt" style="color:var(--muted);margin-top:4px">${esc(e.action)}</div>`:""}
-        ${papersHtml(e)}
+        ${p.contact?`<div class="contact"><b>In their own words — how to reach</b>${fmtStmt(p.contact)}</div>`:""}
+        ${p.statement?`<div class="contact"><b>In their own words — what they're looking for</b>${fmtStmt(p.statement)}</div>`:""}
+        ${papersHtml(e,p.id)}
         <div class="appchips" style="margin-top:9px">
           <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
           <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
@@ -659,7 +669,7 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pjump],[data-sort],[data-eccv]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pjump],[data-sort],[data-eccv],[data-morepapers]");
   if(!t) return;
   if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -685,6 +695,7 @@ document.addEventListener("click",e=>{
   else if(t.dataset.doc){ const us=ustate(t.dataset.u); us.docs=us.docs||{}; us.docs[t.dataset.doc]=!us.docs[t.dataset.doc]; touch(us); const y=window.scrollY; render(); window.scrollTo(0,y); }
   else if(t.dataset.compact){ pFilters.compact=!pFilters.compact; renderPeople(); }
   else if(t.dataset.eccv){ const ps=pstate(t.dataset.eccv); ps.eccv = ps.eccv===t.dataset.est?null:t.dataset.est; touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); }
+  else if(t.dataset.morepapers){ const id=t.dataset.morepapers; eccvPapersOpen.has(id)?eccvPapersOpen.delete(id):eccvPapersOpen.add(id); const y=window.scrollY; renderEccv(); window.scrollTo(0,y); }
   else if(t.dataset.pjump){ pFilters.compact=false; renderPeople(); const el=$("#pc-"+t.dataset.pjump); if(el) el.scrollIntoView({block:"center"}); }
   else if(t.dataset.deldate){ const d=state.dates[t.dataset.deldate]; if(d){ d.del=true; touch(d); renderDates(); toast("Date removed"); } }
   else if(t.dataset.copy){
