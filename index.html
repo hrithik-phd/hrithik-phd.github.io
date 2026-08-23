@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#12151a">
+<title>PhD Command · Application Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12151a; --surface:#1a1f26; --surface2:#232a33; --line:#2c3540;
+  --ink:#e9e4d8; --muted:#8e97a3; --dim:#5c6570;
+  --amber:#e3a94f; --red:#d9695a; --green:#79bd8f; --teal:#63b3a1; --blue:#6da3d8;
+  --eu:#d9c25f; --na:#6da3d8; --asia:#63b3a1; --aus:#e0977a;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;padding-bottom:70px}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+textarea,input,select{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+textarea:focus,input:focus,select:focus,button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+a{color:var(--blue)}
+.wrap{max-width:780px;margin:0 auto;padding:0 12px}
+
+/* header */
+header{position:sticky;top:0;z-index:40;background:rgba(18,21,26,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.hbar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;max-width:780px;margin:0 auto}
+.brand{font-weight:700;letter-spacing:.4px;font-size:15px}
+.brand span{color:var(--amber)}
+.syncdot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;background:var(--dim)}
+.syncdot.ok{background:var(--green)} .syncdot.local{background:var(--amber)} .syncdot.err{background:var(--red)}
+.gear{font-size:18px;padding:4px 8px;color:var(--muted)}
+nav{display:flex;max-width:780px;margin:0 auto}
+nav button{flex:1;padding:9px 4px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;letter-spacing:.3px}
+nav button.on{color:var(--ink);border-bottom-color:var(--amber)}
+
+/* dashboard */
+h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.board{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.brow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.brow:last-child{border-bottom:none}
+.brow.warn{background:#26211a}
+.brow.hot{background:#2b1d1a}
+.tminus{font-family:var(--mono);font-size:13px;font-weight:600;min-width:56px;color:var(--green)}
+.brow.warn .tminus{color:var(--amber)} .brow.hot .tminus{color:var(--red)}
+.bwhat{flex:1;min-width:0}
+.bwhat .l1{font-size:14px;font-weight:600;line-height:1.3}
+.bwhat .l2{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.past{opacity:.45;text-decoration:line-through}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer}
+.stat .n{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1}
+.stat .t{font-size:12px;color:var(--muted);margin-top:4px}
+.stat.amber .n{color:var(--amber)} .stat.red .n{color:var(--red)} .stat.green .n{color:var(--green)} .stat.blue .n{color:var(--blue)}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px 12px}
+.mini .row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+.mini .row:last-child{border-bottom:none}
+.mini .who{font-weight:600}
+.mini .sub{color:var(--muted);font-size:12px}
+.mini .ago{font-family:var(--mono);font-size:12px;color:var(--amber);white-space:nowrap}
+.empty{color:var(--dim);font-size:13px;padding:14px;text-align:center}
+
+/* uni cards */
+.ucard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.ucard.eu{border-left-color:var(--eu)} .ucard.na{border-left-color:var(--na)}
+.ucard.asia{border-left-color:var(--asia)} .ucard.aus{border-left-color:var(--aus)}
+.uhead{display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left}
+.pri{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:34px}
+.uname{flex:1;min-width:0}
+.uname .n{font-weight:600;font-size:15px;line-height:1.3}
+.uname .c{font-size:12px;color:var(--muted)}
+.udots{display:flex;gap:3px;align-items:center}
+.udot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.udot.e{background:var(--amber)} .udot.r{background:var(--green)} .udot.x{background:var(--red)}
+.uchev{color:var(--dim);font-size:12px;transition:transform .15s}
+.ucard.open .uchev{transform:rotate(90deg)}
+.ubody{display:none;border-top:1px solid var(--line);padding:12px}
+.ucard.open .ubody{display:block}
+.locnote{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px}
+.locnote b{color:var(--ink)}
+.secline{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:12px 0 8px}
+
+/* professor cards */
+.pcard{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.pcard.notecard{background:transparent;border-style:dashed}
+.ptop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pname{font-weight:700;font-size:15px}
+.puni{font-size:12px;color:var(--muted);font-weight:400}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
+.bdg{font-size:11px;font-weight:600;font-family:var(--mono);padding:2px 7px;border-radius:99px;border:1px solid}
+.bdg.red{color:var(--red);border-color:var(--red)}
+.bdg.amber{color:var(--amber);border-color:var(--amber)}
+.bdg.green{color:var(--green);border-color:var(--green)}
+.bdg.teal{color:var(--teal);border-color:var(--teal)}
+.bdg.grey{color:var(--muted);border-color:var(--line)}
+.pstatus{font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:6px}
+.stmt{font-size:13.5px;color:#cfd5dc;white-space:pre-line}
+.stmt.clip{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.more{font-size:12px;color:var(--blue);margin-top:3px;padding:2px 0}
+.contact{margin-top:8px;font-size:12.5px;background:var(--bg);border-radius:7px;padding:8px 10px;border:1px solid var(--line)}
+.contact b{font-size:11px;letter-spacing:.08em;color:var(--dim);display:block;text-transform:uppercase;margin-bottom:2px}
+.src{font-size:11px;color:var(--dim);margin-top:6px;font-family:var(--mono);word-break:break-all}
+
+/* pipeline */
+.pipe{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.stg{flex:1;min-width:60px;font-size:12px;font-weight:600;padding:7px 4px;border-radius:7px;border:1px solid var(--line);color:var(--muted);text-align:center}
+.stg.hit{border-color:var(--amber);color:var(--amber);background:#241f16}
+.stg.hit.g{border-color:var(--green);color:var(--green);background:#182219}
+.stg.hit.r{border-color:var(--red);color:var(--red);background:#241715}
+.sdate{font-family:var(--mono);font-size:10px;display:block;margin-top:2px;font-weight:400}
+.noteta{margin-top:8px;min-height:38px;font-size:13px;resize:vertical}
+.notelbl{font-size:11px;color:var(--dim);margin-top:8px;letter-spacing:.06em;text-transform:uppercase}
+
+/* filters */
+.fbar{display:flex;gap:6px;overflow-x:auto;padding:10px 0;-webkit-overflow-scrolling:touch}
+.fbar::-webkit-scrollbar{display:none}
+.fchip{white-space:nowrap;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.fchip.on{border-color:var(--amber);color:var(--amber);background:#241f16}
+.search{margin-top:10px}
+.count{font-size:12px;color:var(--dim);font-family:var(--mono);margin:8px 2px}
+
+/* settings modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none;align-items:flex-end;justify-content:center}
+.modal.open{display:flex}
+.sheet{background:var(--surface);border-radius:14px 14px 0 0;padding:18px 16px 30px;width:100%;max-width:780px;max-height:85vh;overflow:auto}
+.sheet h3{font-size:16px;margin-bottom:12px}
+.sheet label{font-size:12px;color:var(--muted);display:block;margin:12px 0 4px}
+.btnrow{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.btn{font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:8px;border:1px solid var(--line);color:var(--ink)}
+.btn.primary{background:var(--amber);color:#1a1408;border-color:var(--amber)}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.hint{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.5}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:9px 16px;border-radius:99px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+@media(min-width:600px){.statgrid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <div class="brand">PhD <span>Command</span></div>
+    <div>
+      <span class="syncdot" id="syncdot" title="sync status"></span>
+      <button class="gear" id="gearBtn" aria-label="Settings">⚙</button>
+    </div>
+  </div>
+  <nav id="tabs">
+    <button data-v="today" class="on">Today</button>
+    <button data-v="schools">Schools</button>
+    <button data-v="people">People</button>
+    <button data-v="dates">Dates</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section id="v-today"></section>
+  <section id="v-schools" hidden></section>
+  <section id="v-people" hidden></section>
+  <section id="v-dates" hidden></section>
+</main>
+
+<div class="modal" id="settings">
+  <div class="sheet">
+    <h3>Sync settings</h3>
+    <label>Cloudflare Worker URL</label>
+    <input id="setUrl" placeholder="https://phd-sync.yourname.workers.dev">
+    <label>Secret token</label>
+    <input id="setTok" type="password" placeholder="the SECRET_TOKEN you set in the Worker">
+    <div class="hint">Leave both empty to work offline (this device only). With both set, every change syncs through your Worker's KV store, so phone and laptop share one state.</div>
+    <div class="btnrow">
+      <button class="btn primary" id="saveSet">Save & sync now</button>
+      <button class="btn" id="exportBtn">Export backup</button>
+      <button class="btn danger" id="wipeBtn">Clear local data</button>
+    </div>
+    <div class="hint" id="syncInfo"></div>
+    <div class="btnrow"><button class="btn" id="closeSet">Close</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.PHD_DATA;
+const $ = s => document.querySelector(s);
+const uniById = {}; D.universities.forEach(u=>uniById[u.id]=u);
+const profsByUni = {}; D.professors.forEach(p=>{(profsByUni[p.uniId]=profsByUni[p.uniId]||[]).push(p)});
+const STAGES = [["emailed","Emailed"],["replied","Replied"],["interview","Interview"],["offer","Offer"],["rejected","No / Rej."]];
+const STAGE_ORDER = {emailed:1,replied:2,interview:3,offer:4,rejected:4};
+
+/* ---------- state ---------- */
+let state = {profs:{}, unis:{}, v:1};
+function loadLocal(){ try{const s=localStorage.getItem("phdState"); if(s) state=JSON.parse(s);}catch(e){} }
+function saveLocal(){ localStorage.setItem("phdState", JSON.stringify(state)); }
+function pstate(id){ return state.profs[id] || (state.profs[id]={stage:null,dates:{},notes:"",ts:0}); }
+function ustate(id){ return state.unis[id] || (state.unis[id]={notes:"",ts:0}); }
+function touch(o){ o.ts = Date.now(); saveLocal(); queueSync(); }
+
+/* ---------- sync ---------- */
+const cfg = {url: localStorage.getItem("phdWorkerUrl")||"", tok: localStorage.getItem("phdWorkerTok")||""};
+let syncTimer=null, syncState="local";
+function setDot(s){ syncState=s; const d=$("#syncdot"); d.className="syncdot "+(s==="ok"?"ok":s==="err"?"err":"local"); }
+function mergeStates(a,b){ // entity-wise last-write-wins
+  const out={profs:{...a.profs},unis:{...a.unis},v:1};
+  for(const k in b.profs){ if(!out.profs[k]||(b.profs[k].ts||0)>(out.profs[k].ts||0)) out.profs[k]=b.profs[k]; }
+  for(const k in b.unis){ if(!out.unis[k]||(b.unis[k].ts||0)>(out.unis[k].ts||0)) out.unis[k]=b.unis[k]; }
+  return out;
+}
+async function pullMergePush(showToast){
+  if(!cfg.url||!cfg.tok){ setDot("local"); return; }
+  try{
+    const r = await fetch(cfg.url,{headers:{"X-Auth-Token":cfg.tok}});
+    if(!r.ok) throw new Error("GET "+r.status);
+    const remote = await r.json();
+    if(remote && remote.profs) state = mergeStates(remote, state);
+    saveLocal();
+    const w = await fetch(cfg.url,{method:"PUT",headers:{"X-Auth-Token":cfg.tok,"Content-Type":"application/json"},body:JSON.stringify(state)});
+    if(!w.ok) throw new Error("PUT "+w.status);
+    setDot("ok"); if(showToast) toast("Synced");
+    render();
+  }catch(e){ setDot("err"); if(showToast) toast("Sync failed — check URL/token"); }
+}
+function queueSync(){
+  if(!cfg.url||!cfg.tok) return setDot("local");
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(async()=>{
+    try{
+      const w = await fetch(cfg.url,{method:"PUT",headers:{"X-Auth-Token":cfg.tok,"Content-Type":"application/json"},body:JSON.stringify(state)});
+      setDot(w.ok?"ok":"err");
+    }catch(e){ setDot("err"); }
+  }, 900);
+}
+
+/* ---------- helpers ---------- */
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmtStmt(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"); }
+function daysTo(dstr){ const d=new Date(dstr+"T23:59:59"); return Math.ceil((d-new Date())/86400000); }
+function fdate(ts){ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate(); }
+function daysAgo(ts){ return Math.floor((Date.now()-ts)/86400000); }
+function profBadges(p){
+  const b=[];
+  if(p.flags.doNotEmail) b.push('<span class="bdg red">DO NOT EMAIL · portal</span>');
+  if(p.flags.form) b.push('<span class="bdg amber">FORM</span>');
+  if(p.flags.subjectLine) b.push('<span class="bdg amber">SUBJECT LINE</span>');
+  if(p.flags.visiting) b.push('<span class="bdg teal">VISITING ROUTE</span>');
+  if(p.flags.recruiting && !p.flags.warning) b.push('<span class="bdg green">RECRUITING</span>');
+  if(p.flags.warning) b.push('<span class="bdg red">⚠ CAUTION</span>');
+  return b.join("");
+}
+function stageMark(p){ // dashboard dot class for a professor
+  const s=pstate(p.id).stage;
+  if(!s) return "";
+  if(s==="emailed") return "e";
+  if(s==="rejected") return "x";
+  return "r";
+}
+
+/* ---------- professor card ---------- */
+function profCard(p, showUni){
+  const ps = pstate(p.id);
+  const note = p.flags.note;
+  const pipe = note ? "" : `<div class="pipe">`+STAGES.map(([k,lbl])=>{
+    const hit = ps.stage && STAGE_ORDER[ps.stage]>=STAGE_ORDER[k] && !(k==="offer"&&ps.stage==="rejected") && !(k==="rejected"&&ps.stage!=="rejected");
+    const cls = hit ? "stg hit"+(k==="offer"?" g":k==="rejected"?" r":"") : "stg";
+    const dt = ps.dates[k] ? `<span class="sdate">${fdate(ps.dates[k])}</span>` : "";
+    return `<button class="${cls}" data-stg="${k}" data-p="${p.id}">${lbl}${dt}</button>`;
+  }).join("")+`</div>`;
+  return `<div class="pcard${note?" notecard":""}" id="pc-${p.id}">
+    <div class="ptop"><div>
+      <div class="pname">${esc(p.name)}${showUni?` <span class="puni">· ${esc(p.uniName)}</span>`:""}</div>
+    </div></div>
+    <div class="badges">${profBadges(p)}</div>
+    ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
+    <div class="stmt clip" id="st-${p.id}">${fmtStmt(p.statement)}</div>
+    <button class="more" data-more="${p.id}">show full</button>
+    ${p.contact?`<div class="contact"><b>How to reach</b>${fmtStmt(p.contact)}</div>`:""}
+    ${p.source?`<div class="src">${esc(p.source)}</div>`:""}
+    ${pipe}
+    ${note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
+  </div>`;
+}
+
+/* ---------- views ---------- */
+function renderToday(){
+  const now=Date.now();
+  const up = D.deadlines.map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+  const future = up.filter(d=>d.dl>=-3).slice(0,7);
+  const emailed = D.professors.filter(p=>pstate(p.id).stage==="emailed");
+  const overdue = emailed.filter(p=>{const t=pstate(p.id).dates.emailed; return t && daysAgo(t)>=14;});
+  const replied = D.professors.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
+  const contactedUnis = new Set(D.professors.filter(p=>pstate(p.id).stage).map(p=>p.uniId));
+  const untouchedTop = D.universities.filter(u=>u.priority<=15 && !contactedUnis.has(u.id));
+
+  $("#v-today").innerHTML = `
+    <h2>Departures — next deadlines</h2>
+    <div class="board">${future.map(d=>{
+      const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
+      const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
+      return `<div class="brow ${cls}"><span class="tminus">${t}</span>
+        <div class="bwhat"><div class="l1">${esc(d.label)}</div>
+        <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div></div>`;
+    }).join("")||'<div class="empty">No deadlines loaded</div>'}</div>
+
+    <h2>Status</h2>
+    <div class="statgrid">
+      <button class="stat amber" data-go="people" data-preset="awaiting"><div class="n">${emailed.length}</div><div class="t">awaiting reply</div></button>
+      <button class="stat red" data-go="people" data-preset="overdue"><div class="n">${overdue.length}</div><div class="t">follow-up due (14d+)</div></button>
+      <button class="stat green" data-go="people" data-preset="replied"><div class="n">${replied.length}</div><div class="t">replied / active</div></button>
+      <button class="stat blue" data-go="schools"><div class="n">${untouchedTop.length}</div><div class="t">top-15 schools untouched</div></button>
+    </div>
+
+    <h2>Needs follow-up</h2>
+    <div class="mini">${overdue.length?overdue.map(p=>{
+      const t=pstate(p.id).dates.emailed;
+      return `<div class="row"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago">${daysAgo(t)}d silent</span></div>`;
+    }).join(""):'<div class="empty">Nothing overdue. Clean slate.</div>'}</div>
+
+    <h2>Replied — act on these</h2>
+    <div class="mini">${replied.length?replied.map(p=>
+      `<div class="row"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago" style="color:var(--green)">${pstate(p.id).stage}</span></div>`
+    ).join(""):'<div class="empty">No replies logged yet.</div>'}</div>`;
+}
+
+let openUnis = new Set();
+function renderSchools(){
+  $("#v-schools").innerHTML = D.universities.map(u=>{
+    const ps = profsByUni[u.id]||[];
+    const real = ps.filter(p=>!p.flags.note);
+    const dots = real.map(p=>`<span class="udot ${stageMark(p)}"></span>`).join("");
+    const open = openUnis.has(u.id);
+    const us = ustate(u.id);
+    return `<div class="ucard ${u.continent}${open?" open":""}" id="uc-${u.id}">
+      <button class="uhead" data-uni="${u.id}">
+        <span class="pri">P${String(u.priority).padStart(2,"0")}</span>
+        <span class="uname"><span class="n">${esc(u.name)}</span><br><span class="c">${esc(u.city)}${u.city?", ":""}${esc(u.country)}</span></span>
+        <span class="udots">${dots}</span>
+        <span class="uchev">▶</span>
+      </button>
+      <div class="ubody">
+        ${u.locationNotes?`<div class="locnote">${fmtStmt(u.locationNotes)}</div>`:""}
+        ${u.overlap?`<div class="secline">Why this school (fit)</div><div class="locnote">${fmtStmt(u.overlap)}</div>`:""}
+        <div class="secline">Professors (${real.length})</div>
+        ${ps.map(p=>profCard(p,false)).join("")}
+        <div class="notelbl">School notes</div>
+        <textarea class="noteta" data-unote="${u.id}" placeholder="portal account made? LoRs requested? fee paid?">${esc(us.notes)}</textarea>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+let pFilters = {q:"",preset:"",chips:new Set()};
+const CHIPS = [["recruiting","Recruiting"],["visiting","Visiting route"],["doNotEmail","Do-not-email"],["form","Form"],["warning","⚠ Caution"],["na","N.America"],["eu","Europe"],["asia","Asia"],["aus","Australia"]];
+function renderPeople(){
+  const chipHtml = CHIPS.map(([k,l])=>`<button class="fchip${pFilters.chips.has(k)?" on":""}" data-chip="${k}">${l}</button>`).join("");
+  let list = D.professors.filter(p=>!p.flags.note);
+  for(const c of pFilters.chips){
+    if(["na","eu","asia","aus"].includes(c)) list=list.filter(p=>uniById[p.uniId]&&uniById[p.uniId].continent===c);
+    else list=list.filter(p=>p.flags[c]);
+  }
+  if(pFilters.preset==="awaiting") list=list.filter(p=>pstate(p.id).stage==="emailed");
+  if(pFilters.preset==="overdue") list=list.filter(p=>{const s=pstate(p.id);return s.stage==="emailed"&&s.dates.emailed&&daysAgo(s.dates.emailed)>=14;});
+  if(pFilters.preset==="replied") list=list.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
+  if(pFilters.q){ const q=pFilters.q.toLowerCase();
+    list=list.filter(p=>(p.name+" "+p.uniName+" "+p.statement+" "+p.status+" "+p.contact).toLowerCase().includes(q)); }
+  $("#v-people").innerHTML = `
+    <div class="fbar">${chipHtml}</div>
+    <input class="search" id="psearch" placeholder="Search names, statements, methods… e.g. 'grounding' or 'Dec 15'" value="${esc(pFilters.q)}">
+    ${pFilters.preset?`<div class="count">preset: ${pFilters.preset} — <button class="more" id="clearPreset">clear</button></div>`:""}
+    <div class="count">${list.length} professors</div>
+    ${list.map(p=>profCard(p,true)).join("")||'<div class="empty">No matches.</div>'}`;
+  const s=$("#psearch");
+  s.addEventListener("input",e=>{pFilters.q=e.target.value; renderPeople(); const ns=$("#psearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
+  const cp=$("#clearPreset"); if(cp) cp.onclick=()=>{pFilters.preset="";renderPeople();};
+}
+
+function renderDates(){
+  const up = D.deadlines.map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+  $("#v-dates").innerHTML = `<h2>All tracked dates</h2><div class="board">${up.map(d=>{
+    const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
+    const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
+    return `<div class="brow ${cls}"><span class="tminus">${t}</span>
+      <div class="bwhat"><div class="l1">${esc(d.label)}</div>
+      <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div></div>`;
+  }).join("")}</div>
+  <div class="hint" style="margin-top:10px">Dates come from the research audit (Aug 2026). Always reverify on the official page before submitting — programs shift dates between cycles.</div>`;
+}
+
+/* ---------- render + events ---------- */
+let view="today";
+function render(){
+  ["today","schools","people","dates"].forEach(v=>{$("#v-"+v).hidden = v!==view;});
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+  if(view==="today") renderToday();
+  if(view==="schools") renderSchools();
+  if(view==="people") renderPeople();
+  if(view==="dates") renderDates();
+}
+
+document.addEventListener("click",e=>{
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip]");
+  if(!t) return;
+  if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
+  else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
+  else if(t.dataset.stg){
+    const ps=pstate(t.dataset.p); const stg=t.dataset.stg;
+    if(ps.stage===stg){ ps.stage = stg==="emailed"?null:Object.keys(STAGE_ORDER).find(k=>STAGE_ORDER[k]===STAGE_ORDER[stg]-1)||null; }
+    else { ps.stage=stg; if(!ps.dates[stg]) ps.dates[stg]=Date.now(); }
+    touch(ps);
+    // re-render current view but keep scroll
+    const y=window.scrollY; render(); window.scrollTo(0,y);
+  }
+  else if(t.dataset.more){ const el=$("#st-"+t.dataset.more); el.classList.toggle("clip"); t.textContent=el.classList.contains("clip")?"show full":"collapse"; }
+  else if(t.dataset.go){ view=t.dataset.go; if(t.dataset.preset){pFilters.preset=t.dataset.preset;} render(); window.scrollTo(0,0); }
+  else if(t.dataset.chip){ const c=t.dataset.chip; pFilters.chips.has(c)?pFilters.chips.delete(c):pFilters.chips.add(c); renderPeople(); }
+});
+document.addEventListener("input",e=>{
+  if(e.target.dataset.note){ const ps=pstate(e.target.dataset.note); ps.notes=e.target.value; touch(ps); }
+  if(e.target.dataset.unote){ const us=ustate(e.target.dataset.unote); us.notes=e.target.value; touch(us); }
+});
+
+/* ---------- settings ---------- */
+$("#gearBtn").onclick=()=>{ $("#setUrl").value=cfg.url; $("#setTok").value=cfg.tok;
+  $("#syncInfo").textContent = cfg.url?`Configured. Status: ${syncState}`:"Not configured — offline mode.";
+  $("#settings").classList.add("open"); };
+$("#closeSet").onclick=()=>$("#settings").classList.remove("open");
+$("#settings").addEventListener("click",e=>{if(e.target.id==="settings")$("#settings").classList.remove("open");});
+$("#saveSet").onclick=()=>{
+  cfg.url=$("#setUrl").value.trim().replace(/\/$/,""); cfg.tok=$("#setTok").value.trim();
+  localStorage.setItem("phdWorkerUrl",cfg.url); localStorage.setItem("phdWorkerTok",cfg.tok);
+  $("#settings").classList.remove("open"); pullMergePush(true);
+};
+$("#exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="phd-tracker-backup-"+new Date().toISOString().slice(0,10)+".json"; a.click();
+};
+$("#wipeBtn").onclick=()=>{ if(confirm("Erase all tracking data on this device? (Remote KV copy is untouched)")){ localStorage.removeItem("phdState"); state={profs:{},unis:{},v:1}; render(); toast("Local data cleared"); } };
+
+/* ---------- boot ---------- */
+loadLocal(); render(); setDot(cfg.url?"local":"local"); pullMergePush(false);
+</script>
+</body>
+</html>
