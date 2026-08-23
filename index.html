@@ -178,6 +178,17 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
 .crow .cu{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .crow .cs{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
+/* eccv */
+.prio{font-family:var(--mono);font-weight:700;font-size:11px;border-radius:5px;padding:2px 8px;border:1px solid;flex-shrink:0}
+.prio.S{color:var(--amber);border-color:var(--amber);background:#241f16}
+.prio.A{color:var(--green);border-color:var(--green);background:#182219}
+.prio.B{color:var(--blue);border-color:var(--blue);background:#1a2230}
+.prio.C{color:var(--muted);border-color:var(--line)}
+.epaper{font-size:12.5px;color:#cfd5dc;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 10px;margin-top:7px}
+.esess{display:block;font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:2px}
+.star{font-size:16px;color:var(--dim);padding:2px 6px;flex-shrink:0}
+.star.on{color:var(--amber)}
+
 /* hover polish */
 .ucard,.pcard,.stat{transition:border-color .15s}
 .ucard:hover,.stat:hover{border-color:#3d4854}
@@ -202,6 +213,7 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
     <button data-v="schools">Schools</button>
     <button data-v="people">People</button>
     <button data-v="dates">Dates</button>
+    <button data-v="eccv">ECCV</button>
   </nav>
 </header>
 
@@ -210,6 +222,7 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
   <section id="v-schools" hidden></section>
   <section id="v-people" hidden></section>
   <section id="v-dates" hidden></section>
+  <section id="v-eccv" hidden></section>
 </main>
 
 <div class="modal" id="settings">
@@ -234,6 +247,7 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
 <div class="toast" id="toast"></div>
 
 <script src="data.js"></script>
+<script src="eccv.js"></script>
 <script>
 "use strict";
 const D = window.PHD_DATA;
@@ -299,6 +313,16 @@ function daysTo(dstr){ const d=new Date(dstr+"T23:59:59"); return Math.ceil((d-n
 function fdate(ts){ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate(); }
 function daysAgo(ts){ return Math.floor((Date.now()-ts)/86400000); }
 function lastPing(ps){ return Math.max(ps.dates.emailed||0, ...(ps.fu||[])); }
+/* ECCV name matching: strip diacritics/parens/initials, compare spaceless
+   so "Chang Wen Chen"="Changwen Chen", "Joyce Y. Chai"="Joyce Chai" */
+function nameKey(n){
+  return (n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+    .replace(/\(.*?\)/g," ").replace(/[^a-z ]/g," ")
+    .split(/\s+/).filter(w=>w.length>1).join("");
+}
+const ECCV = window.ECCV_DATA || {professors:[],papers:{},generated:"",note:""};
+const eccvByKey = {}; ECCV.professors.forEach(e=>eccvByKey[nameKey(e.name)]=e);
+const ECCV_RANK = {S:4,A:3,B:2,C:1};
 function draftMail(p, em){
   const uni = uniById[p.uniId]||{};
   const last = p.name.trim().split(/\s+/).pop();
@@ -557,19 +581,85 @@ function renderDates(){
   $("#icsBtn").onclick=exportICS;
 }
 
+function renderEccv(){
+  const matches=[]; const mk=new Set();
+  D.professors.filter(p=>!p.flags.note).forEach(p=>{
+    const e=eccvByKey[nameKey(p.name)];
+    if(e){ matches.push({p,e}); mk.add(nameKey(e.name)); }
+  });
+  matches.sort((a,b)=>(ECCV_RANK[b.e.priority]||0)-(ECCV_RANK[a.e.priority]||0)||(b.e.score||0)-(a.e.score||0));
+
+  const uniKey=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ")
+    .replace(/\b(the|of|at|in|university|univ|institute|institution|technology|tech|school|college)\b/g,"")
+    .replace(/\s+/g," ").trim();
+  const myUnis=D.universities.map(u=>({u,k:uniKey(u.name)}));
+  const others=ECCV.professors.filter(e=>!mk.has(nameKey(e.name))).map(e=>{
+    const k=uniKey(e.institution);
+    const hit=myUnis.find(m=>m.k&&k&&(k.includes(m.k)||m.k.includes(k)));
+    return hit?{e,uni:hit.u}:null;
+  }).filter(Boolean).sort((a,b)=>(ECCV_RANK[b.e.priority]||0)-(ECCV_RANK[a.e.priority]||0)||(b.e.score||0)-(a.e.score||0));
+
+  const nPlan=matches.filter(m=>pstate(m.p.id).eccv==="plan").length;
+  const nMet=matches.filter(m=>pstate(m.p.id).eccv==="met").length;
+  const prio=p=>`<span class="prio ${p||"C"}">${p||"?"}</span>`;
+  const papersHtml=e=>(e.paperIds||[]).slice(0,3).map(id=>{
+    const pp=ECCV.papers[id]; if(!pp) return "";
+    return `<div class="epaper">${esc(pp.title)}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
+  }).join("")+((e.paperIds||[]).length>3?`<div class="esess" style="margin-top:3px">+${e.paperIds.length-3} more papers</div>`:"");
+
+  $("#v-eccv").innerHTML = `
+    <h2>Your targets at ECCV 2026</h2>
+    <div class="progress">
+      <div class="ptop2"><span><b>${matches.length}</b> of your tracked professors have ECCV papers</span></div>
+      <div class="plegend">
+        <span><span class="dotk" style="background:var(--amber)"></span>plan to meet <b>${nPlan}</b></span>
+        <span><span class="dotk" style="background:var(--green)"></span>met <b>${nMet}</b></span>
+      </div>
+    </div>
+    ${matches.map(({p,e})=>{
+      const ps=pstate(p.id);
+      return `<div class="pcard">
+        <div class="ptop"><div>
+          <div class="pname">${esc(p.name)} <span class="puni">· ${esc(p.uniName)}</span></div>
+        </div>${prio(e.priority)}</div>
+        <div class="badges">
+          ${ps.stage?`<span class="bdg ${ps.stage==="rejected"?"grey":ps.stage==="emailed"?"amber":"green"}">${ps.stage.toUpperCase()}</span>`:'<span class="bdg grey">NOT CONTACTED</span>'}
+          ${profBadges(p)}
+        </div>
+        ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
+        ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
+        ${e.action?`<div class="stmt" style="color:var(--muted);margin-top:4px">${esc(e.action)}</div>`:""}
+        ${papersHtml(e)}
+        <div class="appchips" style="margin-top:9px">
+          <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
+          <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
+        </div>
+      </div>`;
+    }).join("")||'<div class="empty">No overlaps found.</div>'}
+
+    <h2>Also at ECCV from your target schools (${others.length})</h2>
+    <div class="hint" style="margin-bottom:8px">Not on your outreach list, but faculty at schools you're targeting — worth a hello at their poster. Star the ones you want to catch.</div>
+    <div class="board">${others.map(({e,uni})=>{
+      const xid="ex-"+nameKey(e.name); const on=pstate(xid).eccv==="plan";
+      return `<div class="crow">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span><button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
+    }).join("")}</div>
+    <div class="hint" style="margin-top:10px">${esc(ECCV.note)} Data generated ${esc(ECCV.generated)} from the ECCV navigator audit.</div>`;
+}
+
 /* ---------- render + events ---------- */
 let view="today";
 function render(){
-  ["today","schools","people","dates"].forEach(v=>{$("#v-"+v).hidden = v!==view;});
+  ["today","schools","people","dates","eccv"].forEach(v=>{$("#v-"+v).hidden = v!==view;});
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
   if(view==="today") renderToday();
   if(view==="schools") renderSchools();
   if(view==="people") renderPeople();
   if(view==="dates") renderDates();
+  if(view==="eccv") renderEccv();
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pjump],[data-sort]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pjump],[data-sort],[data-eccv]");
   if(!t) return;
   if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -594,6 +684,7 @@ document.addEventListener("click",e=>{
   else if(t.dataset.fu){ const ps=pstate(t.dataset.fu); (ps.fu=ps.fu||[]).push(Date.now()); touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); toast("Follow-up logged — clock reset"); }
   else if(t.dataset.doc){ const us=ustate(t.dataset.u); us.docs=us.docs||{}; us.docs[t.dataset.doc]=!us.docs[t.dataset.doc]; touch(us); const y=window.scrollY; render(); window.scrollTo(0,y); }
   else if(t.dataset.compact){ pFilters.compact=!pFilters.compact; renderPeople(); }
+  else if(t.dataset.eccv){ const ps=pstate(t.dataset.eccv); ps.eccv = ps.eccv===t.dataset.est?null:t.dataset.est; touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); }
   else if(t.dataset.pjump){ pFilters.compact=false; renderPeople(); const el=$("#pc-"+t.dataset.pjump); if(el) el.scrollIntoView({block:"center"}); }
   else if(t.dataset.deldate){ const d=state.dates[t.dataset.deldate]; if(d){ d.del=true; touch(d); renderDates(); toast("Date removed"); } }
   else if(t.dataset.copy){

@@ -1,6 +1,6 @@
 // PhD Command service worker — network-first for same-origin, cache fallback offline.
-const CACHE = "phd-cmd-v1";
-const SHELL = ["./", "./index.html", "./data.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const CACHE = "phd-cmd-v2";
+const SHELL = ["./", "./index.html", "./data.js", "./eccv.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
