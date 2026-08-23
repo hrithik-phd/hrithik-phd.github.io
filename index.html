@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#12151a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PhD Command">
 <title>PhD Command · Application Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,6 +140,50 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
 .hint{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.5}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:9px 16px;border-radius:99px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
+
+/* progress overview */
+.progress{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.ptop2{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
+.ptop2 b{font-family:var(--mono);font-size:16px}
+.pbar{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;display:flex;margin-top:8px}
+.pbar i{display:block;height:100%}
+.plegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted)}
+.plegend b{font-family:var(--mono);color:var(--ink)}
+.dotk{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:baseline}
+
+/* uni info grid + application status */
+.uinfo{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px}
+.uinfo b{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;white-space:nowrap;padding-top:1px}
+.uinfo span{color:#cfd5dc;word-break:break-word}
+.appchips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.appc{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.appc.on{border-color:var(--blue);color:var(--blue);background:#1a2230}
+.apptag{font-size:10px;font-weight:700;font-family:var(--mono);padding:2px 6px;border-radius:4px;background:#1a2230;color:var(--blue);white-space:nowrap}
+
+/* dates form */
+.dform{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:14px}
+.dform .frow{display:flex;gap:8px;margin-bottom:8px}
+.delx{color:var(--red);font-size:14px;padding:4px 8px;opacity:.7}
+.delx:hover{opacity:1}
+
+/* follow-up + docs + compact rows */
+.fubtn{font-size:12px;font-weight:600;color:var(--amber);border:1px solid var(--amber);border-radius:99px;padding:5px 12px;margin-top:10px}
+.fuline{font-size:11px;color:var(--dim);font-family:var(--mono);margin-left:10px}
+.appc.g.on{border-color:var(--green);color:var(--green);background:#182219}
+.apptag.doctag{background:#1f2a22;color:var(--green)}
+.crow{display:flex;align-items:center;width:100%;text-align:left;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;background:var(--surface)}
+.crow:last-child{border-bottom:none}
+.crow:hover{background:var(--surface2)}
+.crow .cn{font-weight:600;white-space:nowrap}
+.crow .cu{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.crow .cs{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* hover polish */
+.ucard,.pcard,.stat{transition:border-color .15s}
+.ucard:hover,.stat:hover{border-color:#3d4854}
+.stat:active{transform:scale(.98)}
+.btn:hover,.fchip:hover{border-color:var(--muted)}
+.copybtn{font-size:11.5px;color:var(--blue);font-family:var(--mono);margin-top:4px;padding:2px 0;display:inline-block}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 @media(min-width:600px){.statgrid{grid-template-columns:repeat(4,1fr)}}
 </style>
@@ -174,8 +223,10 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
     <div class="btnrow">
       <button class="btn primary" id="saveSet">Save & sync now</button>
       <button class="btn" id="exportBtn">Export backup</button>
+      <button class="btn" id="importBtn">Import backup</button>
       <button class="btn danger" id="wipeBtn">Clear local data</button>
     </div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
     <div class="hint" id="syncInfo"></div>
     <div class="btnrow"><button class="btn" id="closeSet">Close</button></div>
   </div>
@@ -191,13 +242,17 @@ const uniById = {}; D.universities.forEach(u=>uniById[u.id]=u);
 const profsByUni = {}; D.professors.forEach(p=>{(profsByUni[p.uniId]=profsByUni[p.uniId]||[]).push(p)});
 const STAGES = [["emailed","Emailed"],["replied","Replied"],["interview","Interview"],["offer","Offer"],["rejected","No / Rej."]];
 const STAGE_ORDER = {emailed:1,replied:2,interview:3,offer:4,rejected:4};
+const APP_STAGES = [["prep","Preparing"],["submitted","Submitted"],["interview","Interview"],["offer","Offer"],["rejected","Rejected"]];
+const APP_LBL = Object.fromEntries(APP_STAGES);
+const APP_RANK = {offer:6,interview:5,submitted:4,prep:3,rejected:1};
+const DOCS = [["sop","SOP"],["cv","CV"],["lor1","LoR 1"],["lor2","LoR 2"],["lor3","LoR 3"],["transcripts","Transcripts"],["fee","Fee paid"]];
 
 /* ---------- state ---------- */
-let state = {profs:{}, unis:{}, v:1};
-function loadLocal(){ try{const s=localStorage.getItem("phdState"); if(s) state=JSON.parse(s);}catch(e){} }
+let state = {profs:{}, unis:{}, dates:{}, v:1};
+function loadLocal(){ try{const s=localStorage.getItem("phdState"); if(s) state=JSON.parse(s);}catch(e){} if(!state.dates) state.dates={}; }
 function saveLocal(){ localStorage.setItem("phdState", JSON.stringify(state)); }
 function pstate(id){ return state.profs[id] || (state.profs[id]={stage:null,dates:{},notes:"",ts:0}); }
-function ustate(id){ return state.unis[id] || (state.unis[id]={notes:"",ts:0}); }
+function ustate(id){ return state.unis[id] || (state.unis[id]={notes:"",app:null,ts:0}); }
 function touch(o){ o.ts = Date.now(); saveLocal(); queueSync(); }
 
 /* ---------- sync ---------- */
@@ -205,9 +260,10 @@ const cfg = {url: localStorage.getItem("phdWorkerUrl")||"", tok: localStorage.ge
 let syncTimer=null, syncState="local";
 function setDot(s){ syncState=s; const d=$("#syncdot"); d.className="syncdot "+(s==="ok"?"ok":s==="err"?"err":"local"); }
 function mergeStates(a,b){ // entity-wise last-write-wins
-  const out={profs:{...a.profs},unis:{...a.unis},v:1};
+  const out={profs:{...a.profs},unis:{...a.unis},dates:{...(a.dates||{})},v:1};
   for(const k in b.profs){ if(!out.profs[k]||(b.profs[k].ts||0)>(out.profs[k].ts||0)) out.profs[k]=b.profs[k]; }
   for(const k in b.unis){ if(!out.unis[k]||(b.unis[k].ts||0)>(out.unis[k].ts||0)) out.unis[k]=b.unis[k]; }
+  for(const k in (b.dates||{})){ if(!out.dates[k]||(b.dates[k].ts||0)>(out.dates[k].ts||0)) out.dates[k]=b.dates[k]; }
   return out;
 }
 async function pullMergePush(showToast){
@@ -242,6 +298,34 @@ function fmtStmt(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>
 function daysTo(dstr){ const d=new Date(dstr+"T23:59:59"); return Math.ceil((d-new Date())/86400000); }
 function fdate(ts){ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate(); }
 function daysAgo(ts){ return Math.floor((Date.now()-ts)/86400000); }
+function lastPing(ps){ return Math.max(ps.dates.emailed||0, ...(ps.fu||[])); }
+function draftMail(p, em){
+  const uni = uniById[p.uniId]||{};
+  const last = p.name.trim().split(/\s+/).pop();
+  const subj = p.flags.subjectLine ? "" : "Prospective PhD applicant — [your topic]";
+  const fit = ((uni.overlap||"").match(/^[^.]*\./)||[""])[0].trim();
+  const body = `Dear Prof. ${last},\n\n[Introduce yourself: name, current role, one-line research identity.]\n\n[Why them: ${fit?fit.slice(0,220):"reference a specific recent paper and connect it to your work"}]\n\n[1-2 concrete results. Mention CV attached.]\n\nBest regards,\n[Your name]`
+    + (p.flags.subjectLine ? "\n\nNOTE: this professor requires a SPECIFIC SUBJECT LINE — check the card before sending!" : "");
+  return `mailto:${em}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function allDeadlines(){
+  const custom = Object.entries(state.dates).filter(([,d])=>!d.del)
+    .map(([id,d])=>({date:d.date,label:d.label,uni:d.uni,custom:true,id}));
+  return D.deadlines.concat(custom).map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+}
+function exportICS(){
+  const evs = allDeadlines().filter(d=>d.dl>=-1);
+  const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//PhD Command//EN"];
+  evs.forEach((d,i)=>{
+    const dt=d.date.replace(/-/g,"");
+    const sum=(d.label+(d.uni?" — "+d.uni:"")).replace(/[,;\\]/g," ");
+    lines.push("BEGIN:VEVENT","UID:phd-"+dt+"-"+i+"@phdcommand","DTSTART;VALUE=DATE:"+dt,"SUMMARY:"+sum,"END:VEVENT");
+  });
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([lines.join("\r\n")],{type:"text/calendar"}));
+  a.download="phd-deadlines.ics"; a.click();
+  toast(evs.length+" dates exported");
+}
 function profBadges(p){
   const b=[];
   if(p.flags.doNotEmail) b.push('<span class="bdg red">DO NOT EMAIL · portal</span>');
@@ -278,23 +362,32 @@ function profCard(p, showUni){
     ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
     <div class="stmt clip" id="st-${p.id}">${fmtStmt(p.statement)}</div>
     <button class="more" data-more="${p.id}">show full</button>
-    ${p.contact?`<div class="contact"><b>How to reach</b>${fmtStmt(p.contact)}</div>`:""}
+    ${p.contact?`<div class="contact"><b>How to reach</b>${fmtStmt(p.contact)}${(m=>m?`<br><button class="copybtn" data-copy="${esc(m)}">⧉ copy ${esc(m)}</button>${p.flags.doNotEmail?"":` <a class="copybtn" href="${draftMail(p,m)}">✉ draft email</a>`}`:"")((p.contact.match(/[\w.+-]+@[\w.-]+\.\w+/)||[])[0])}</div>`:""}
     ${p.source?`<div class="src">${esc(p.source)}</div>`:""}
     ${pipe}
+    ${!note && ps.stage==="emailed" ? `<button class="fubtn" data-fu="${p.id}">↻ log follow-up${(ps.fu&&ps.fu.length)?` (${ps.fu.length})`:""}</button><span class="fuline">last contact ${daysAgo(lastPing(ps))}d ago</span>` : ""}
     ${note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
   </div>`;
 }
 
 /* ---------- views ---------- */
 function renderToday(){
-  const now=Date.now();
-  const up = D.deadlines.map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+  const up = allDeadlines();
   const future = up.filter(d=>d.dl>=-3).slice(0,7);
   const emailed = D.professors.filter(p=>pstate(p.id).stage==="emailed");
-  const overdue = emailed.filter(p=>{const t=pstate(p.id).dates.emailed; return t && daysAgo(t)>=14;});
+  const overdue = emailed.filter(p=>{const t=lastPing(pstate(p.id)); return t && daysAgo(t)>=14;});
   const replied = D.professors.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
   const contactedUnis = new Set(D.professors.filter(p=>pstate(p.id).stage).map(p=>p.uniId));
   const untouchedTop = D.universities.filter(u=>u.priority<=15 && !contactedUnis.has(u.id));
+
+  const real = D.professors.filter(p=>!p.flags.note);
+  const nTot = real.length;
+  const nAct = real.filter(p=>["replied","interview","offer"].includes(pstate(p.id).stage)).length;
+  const nEm  = real.filter(p=>pstate(p.id).stage==="emailed").length;
+  const nRej = real.filter(p=>pstate(p.id).stage==="rejected").length;
+  const nCon = nAct+nEm+nRej;
+  const nApps = Object.values(state.unis).filter(u=>["submitted","interview","offer"].includes(u.app)).length;
+  const pc = v=>nTot?(v/nTot*100).toFixed(1):0;
 
   $("#v-today").innerHTML = `
     <h2>Departures — next deadlines</h2>
@@ -306,6 +399,22 @@ function renderToday(){
         <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div></div>`;
     }).join("")||'<div class="empty">No deadlines loaded</div>'}</div>
 
+    <h2>Outreach progress</h2>
+    <div class="progress">
+      <div class="ptop2"><span><b>${nCon}</b> / ${nTot} professors contacted</span><span style="color:var(--muted);font-family:var(--mono)">${nTot?Math.round(nCon/nTot*100):0}%</span></div>
+      <div class="pbar">
+        <i style="width:${pc(nAct)}%;background:var(--green)"></i>
+        <i style="width:${pc(nEm)}%;background:var(--amber)"></i>
+        <i style="width:${pc(nRej)}%;background:var(--red)"></i>
+      </div>
+      <div class="plegend">
+        <span><span class="dotk" style="background:var(--green)"></span>replied+ <b>${nAct}</b></span>
+        <span><span class="dotk" style="background:var(--amber)"></span>awaiting <b>${nEm}</b></span>
+        <span><span class="dotk" style="background:var(--red)"></span>closed <b>${nRej}</b></span>
+        <span><span class="dotk" style="background:var(--blue)"></span>apps submitted <b>${nApps}</b></span>
+      </div>
+    </div>
+
     <h2>Status</h2>
     <div class="statgrid">
       <button class="stat amber" data-go="people" data-preset="awaiting"><div class="n">${emailed.length}</div><div class="t">awaiting reply</div></button>
@@ -316,7 +425,7 @@ function renderToday(){
 
     <h2>Needs follow-up</h2>
     <div class="mini">${overdue.length?overdue.map(p=>{
-      const t=pstate(p.id).dates.emailed;
+      const t=lastPing(pstate(p.id));
       return `<div class="row"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago">${daysAgo(t)}d silent</span></div>`;
     }).join(""):'<div class="empty">Nothing overdue. Clean slate.</div>'}</div>
 
@@ -327,22 +436,56 @@ function renderToday(){
 }
 
 let openUnis = new Set();
+let sFilters = {q:"",cont:"",sort:""}, sVisible = [];
 function renderSchools(){
-  $("#v-schools").innerHTML = D.universities.map(u=>{
+  let unis = D.universities;
+  if(sFilters.cont) unis = unis.filter(u=>u.continent===sFilters.cont);
+  if(sFilters.q){ const q=sFilters.q.toLowerCase();
+    unis = unis.filter(u=>(u.name+" "+u.country+" "+u.city+" "+(u.program||"")+" "+(u.overlap||"")).toLowerCase().includes(q)
+      || (profsByUni[u.id]||[]).some(p=>p.name.toLowerCase().includes(q))); }
+  if(sFilters.sort==="status") unis=[...unis].sort((a,b)=>((APP_RANK[(state.unis[b.id]||{}).app]||2)-(APP_RANK[(state.unis[a.id]||{}).app]||2))||a.priority-b.priority);
+  if(sFilters.sort==="activity"){ const act=u=>Math.max((state.unis[u.id]||{}).ts||0,...(profsByUni[u.id]||[]).map(p=>(state.profs[p.id]||{}).ts||0),0); unis=[...unis].sort((a,b)=>act(b)-act(a)); }
+  sVisible = unis.map(u=>u.id);
+  $("#v-schools").innerHTML = `
+    <div class="fbar">
+      ${[["eu","Europe"],["na","N.America"],["asia","Asia"],["aus","Australia"]].map(([k,l])=>`<button class="fchip${sFilters.cont===k?" on":""}" data-cont="${k}">${l}</button>`).join("")}
+      <button class="fchip${sFilters.sort==="status"?" on":""}" data-sort="status">Sort: status</button>
+      <button class="fchip${sFilters.sort==="activity"?" on":""}" data-sort="activity">Sort: recent</button>
+      <button class="fchip" data-sx="open">Expand all</button>
+      <button class="fchip" data-sx="close">Collapse all</button>
+    </div>
+    <input class="search" id="ssearch" placeholder="Search schools, cities, professors…" value="${esc(sFilters.q)}">
+    <div class="count">${unis.length} schools</div>
+  ` + unis.map(u=>{
     const ps = profsByUni[u.id]||[];
     const real = ps.filter(p=>!p.flags.note);
     const dots = real.map(p=>`<span class="udot ${stageMark(p)}"></span>`).join("");
     const open = openUnis.has(u.id);
     const us = ustate(u.id);
+    const dn = Object.values(us.docs||{}).filter(Boolean).length;
+    const info = [
+      u.program?["Program",esc(u.program)]:null,
+      u.deadlineCell?["Deadline",esc(u.deadlineCell)]:null,
+      u.stipend?["Stipend",esc(u.stipend)]:null,
+      u.langEnv?["Language",esc(u.langEnv).replace(/\n/g," ")]:null,
+      u.portal?["Portal",`<a href="https://${esc(u.portal)}" target="_blank" rel="noopener">${esc(u.portal)}</a>`]:null,
+    ].filter(Boolean);
     return `<div class="ucard ${u.continent}${open?" open":""}" id="uc-${u.id}">
       <button class="uhead" data-uni="${u.id}">
         <span class="pri">P${String(u.priority).padStart(2,"0")}</span>
         <span class="uname"><span class="n">${esc(u.name)}</span><br><span class="c">${esc(u.city)}${u.city?", ":""}${esc(u.country)}</span></span>
+        ${us.app?`<span class="apptag">${APP_LBL[us.app].toUpperCase()}</span>`:""}
+        ${dn?`<span class="apptag doctag">DOCS ${dn}/${DOCS.length}</span>`:""}
         <span class="udots">${dots}</span>
         <span class="uchev">▶</span>
       </button>
       <div class="ubody">
-        ${u.locationNotes?`<div class="locnote">${fmtStmt(u.locationNotes)}</div>`:""}
+        ${info.length?`<div class="uinfo">${info.map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join("")}</div>`:""}
+        <div class="secline">Application status</div>
+        <div class="appchips">${APP_STAGES.map(([k,l])=>`<button class="appc${us.app===k?" on":""}" data-app="${k}" data-u="${u.id}">${l}</button>`).join("")}</div>
+        <div class="secline">Documents</div>
+        <div class="appchips">${DOCS.map(([k,l])=>`<button class="appc g${(us.docs&&us.docs[k])?" on":""}" data-doc="${k}" data-u="${u.id}">${(us.docs&&us.docs[k])?"✓ ":""}${l}</button>`).join("")}</div>
+        ${u.locationNotes?`<div class="secline">Location</div><div class="locnote">${fmtStmt(u.locationNotes)}</div>`:""}
         ${u.overlap?`<div class="secline">Why this school (fit)</div><div class="locnote">${fmtStmt(u.overlap)}</div>`:""}
         <div class="secline">Professors (${real.length})</div>
         ${ps.map(p=>profCard(p,false)).join("")}
@@ -351,9 +494,11 @@ function renderSchools(){
       </div>
     </div>`;
   }).join("");
+  const s=$("#ssearch");
+  s.addEventListener("input",e=>{sFilters.q=e.target.value; renderSchools(); const ns=$("#ssearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
 }
 
-let pFilters = {q:"",preset:"",chips:new Set()};
+let pFilters = {q:"",preset:"",chips:new Set(),compact:false};
 const CHIPS = [["recruiting","Recruiting"],["visiting","Visiting route"],["doNotEmail","Do-not-email"],["form","Form"],["warning","⚠ Caution"],["na","N.America"],["eu","Europe"],["asia","Asia"],["aus","Australia"]];
 function renderPeople(){
   const chipHtml = CHIPS.map(([k,l])=>`<button class="fchip${pFilters.chips.has(k)?" on":""}" data-chip="${k}">${l}</button>`).join("");
@@ -363,31 +508,53 @@ function renderPeople(){
     else list=list.filter(p=>p.flags[c]);
   }
   if(pFilters.preset==="awaiting") list=list.filter(p=>pstate(p.id).stage==="emailed");
-  if(pFilters.preset==="overdue") list=list.filter(p=>{const s=pstate(p.id);return s.stage==="emailed"&&s.dates.emailed&&daysAgo(s.dates.emailed)>=14;});
+  if(pFilters.preset==="overdue") list=list.filter(p=>{const s=pstate(p.id);return s.stage==="emailed"&&lastPing(s)&&daysAgo(lastPing(s))>=14;});
   if(pFilters.preset==="replied") list=list.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
   if(pFilters.q){ const q=pFilters.q.toLowerCase();
     list=list.filter(p=>(p.name+" "+p.uniName+" "+p.statement+" "+p.status+" "+p.contact).toLowerCase().includes(q)); }
+  const listHtml = pFilters.compact
+    ? `<div class="board">`+list.map(p=>{
+        const s=pstate(p.id).stage;
+        const col=s?(s==="rejected"?"var(--red)":s==="emailed"?"var(--amber)":"var(--green)"):"var(--dim)";
+        return `<button class="crow" data-pjump="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cu">${esc(p.uniName)}</span><span class="cs">${s||"—"}</span></button>`;
+      }).join("")+`</div>`
+    : list.map(p=>profCard(p,true)).join("");
   $("#v-people").innerHTML = `
-    <div class="fbar">${chipHtml}</div>
+    <div class="fbar"><button class="fchip${pFilters.compact?" on":""}" data-compact="1">≡ Compact</button>${chipHtml}</div>
     <input class="search" id="psearch" placeholder="Search names, statements, methods… e.g. 'grounding' or 'Dec 15'" value="${esc(pFilters.q)}">
     ${pFilters.preset?`<div class="count">preset: ${pFilters.preset} — <button class="more" id="clearPreset">clear</button></div>`:""}
     <div class="count">${list.length} professors</div>
-    ${list.map(p=>profCard(p,true)).join("")||'<div class="empty">No matches.</div>'}`;
+    ${listHtml||'<div class="empty">No matches.</div>'}`;
   const s=$("#psearch");
   s.addEventListener("input",e=>{pFilters.q=e.target.value; renderPeople(); const ns=$("#psearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
   const cp=$("#clearPreset"); if(cp) cp.onclick=()=>{pFilters.preset="";renderPeople();};
 }
 
 function renderDates(){
-  const up = D.deadlines.map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+  const up = allDeadlines();
   $("#v-dates").innerHTML = `<h2>All tracked dates</h2><div class="board">${up.map(d=>{
     const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
     const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
     return `<div class="brow ${cls}"><span class="tminus">${t}</span>
       <div class="bwhat"><div class="l1">${esc(d.label)}</div>
-      <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div></div>`;
+      <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div>
+      ${d.custom?`<button class="delx" data-deldate="${d.id}" aria-label="Delete date">✕</button>`:""}</div>`;
   }).join("")}</div>
-  <div class="hint" style="margin-top:10px">Dates come from the research audit (Aug 2026). Always reverify on the official page before submitting — programs shift dates between cycles.</div>`;
+  <div class="dform">
+    <div class="secline" style="margin-top:0">Add your own date</div>
+    <div class="frow"><input type="date" id="ndDate" style="max-width:170px"><input id="ndLabel" placeholder="e.g. TOEFL exam · SOP draft due"></div>
+    <div class="frow"><input id="ndUni" placeholder="University (optional)"><button class="btn primary" id="addDate" style="white-space:nowrap">Add date</button></div>
+  </div>
+  <div class="btnrow"><button class="btn" id="icsBtn">Export to calendar (.ics)</button></div>
+  <div class="hint" style="margin-top:10px">Dates come from the research audit (Aug 2026). Always reverify on the official page before submitting — programs shift dates between cycles. Your own dates (✕) sync across devices like everything else.</div>`;
+  $("#addDate").onclick=()=>{
+    const date=$("#ndDate").value, label=$("#ndLabel").value.trim();
+    if(!date||!label){ toast("Need a date and a label"); return; }
+    const id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    state.dates[id]={date,label,uni:$("#ndUni").value.trim(),ts:0};
+    touch(state.dates[id]); renderDates(); toast("Date added");
+  };
+  $("#icsBtn").onclick=exportICS;
 }
 
 /* ---------- render + events ---------- */
@@ -402,7 +569,7 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pjump],[data-sort]");
   if(!t) return;
   if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -417,6 +584,23 @@ document.addEventListener("click",e=>{
   else if(t.dataset.more){ const el=$("#st-"+t.dataset.more); el.classList.toggle("clip"); t.textContent=el.classList.contains("clip")?"show full":"collapse"; }
   else if(t.dataset.go){ view=t.dataset.go; if(t.dataset.preset){pFilters.preset=t.dataset.preset;} render(); window.scrollTo(0,0); }
   else if(t.dataset.chip){ const c=t.dataset.chip; pFilters.chips.has(c)?pFilters.chips.delete(c):pFilters.chips.add(c); renderPeople(); }
+  else if(t.dataset.app){
+    const us=ustate(t.dataset.u); us.app = us.app===t.dataset.app?null:t.dataset.app; touch(us);
+    const y=window.scrollY; render(); window.scrollTo(0,y);
+  }
+  else if(t.dataset.cont){ sFilters.cont = sFilters.cont===t.dataset.cont?"":t.dataset.cont; renderSchools(); }
+  else if(t.dataset.sort){ sFilters.sort = sFilters.sort===t.dataset.sort?"":t.dataset.sort; renderSchools(); }
+  else if(t.dataset.sx){ if(t.dataset.sx==="open") sVisible.forEach(id=>openUnis.add(id)); else openUnis.clear(); renderSchools(); }
+  else if(t.dataset.fu){ const ps=pstate(t.dataset.fu); (ps.fu=ps.fu||[]).push(Date.now()); touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); toast("Follow-up logged — clock reset"); }
+  else if(t.dataset.doc){ const us=ustate(t.dataset.u); us.docs=us.docs||{}; us.docs[t.dataset.doc]=!us.docs[t.dataset.doc]; touch(us); const y=window.scrollY; render(); window.scrollTo(0,y); }
+  else if(t.dataset.compact){ pFilters.compact=!pFilters.compact; renderPeople(); }
+  else if(t.dataset.pjump){ pFilters.compact=false; renderPeople(); const el=$("#pc-"+t.dataset.pjump); if(el) el.scrollIntoView({block:"center"}); }
+  else if(t.dataset.deldate){ const d=state.dates[t.dataset.deldate]; if(d){ d.del=true; touch(d); renderDates(); toast("Date removed"); } }
+  else if(t.dataset.copy){
+    navigator.clipboard.writeText(t.dataset.copy)
+      .then(()=>toast("Copied: "+t.dataset.copy))
+      .catch(()=>toast("Copy failed"));
+  }
 });
 document.addEventListener("input",e=>{
   if(e.target.dataset.note){ const ps=pstate(e.target.dataset.note); ps.notes=e.target.value; touch(ps); }
@@ -439,10 +623,25 @@ $("#exportBtn").onclick=()=>{
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
   a.download="phd-tracker-backup-"+new Date().toISOString().slice(0,10)+".json"; a.click();
 };
-$("#wipeBtn").onclick=()=>{ if(confirm("Erase all tracking data on this device? (Remote KV copy is untouched)")){ localStorage.removeItem("phdState"); state={profs:{},unis:{},v:1}; render(); toast("Local data cleared"); } };
+$("#importBtn").onclick=()=>$("#importFile").click();
+$("#importFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const j=JSON.parse(r.result);
+      if(!j||typeof j!=="object"||!j.profs) throw new Error("bad shape");
+      state=mergeStates(state,{profs:j.profs||{},unis:j.unis||{},dates:j.dates||{}});
+      saveLocal(); queueSync(); render(); toast("Backup imported & merged");
+    }catch(err){ toast("Invalid backup file"); }
+  };
+  r.readAsText(f); e.target.value="";
+};
+$("#wipeBtn").onclick=()=>{ if(confirm("Erase all tracking data on this device? (Remote KV copy is untouched)")){ localStorage.removeItem("phdState"); state={profs:{},unis:{},dates:{},v:1}; render(); toast("Local data cleared"); } };
 
 /* ---------- boot ---------- */
 loadLocal(); render(); setDot(cfg.url?"local":"local"); pullMergePush(false);
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
 </html>

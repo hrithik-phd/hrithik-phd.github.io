@@ -1,0 +1,7 @@
+name = "hrithik-phd-sync"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[[kv_namespaces]]
+binding = "PHD_KV"
+id = "d33ea14a23a4423a9e8c7ec3647fb1e5"
