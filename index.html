@@ -130,7 +130,13 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
 /* settings modal */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none;align-items:flex-end;justify-content:center}
 .modal.open{display:flex}
-.sheet{background:var(--surface);border-radius:14px 14px 0 0;padding:18px 16px 30px;width:100%;max-width:780px;max-height:85vh;overflow:auto}
+.sheet{position:relative;background:var(--surface);border-radius:14px 14px 0 0;padding:18px 16px 30px;width:100%;max-width:780px;max-height:85vh;overflow:auto}
+.mclose{position:absolute;top:12px;right:12px;font-size:15px;color:var(--muted);padding:6px 9px;border-radius:8px}
+.mclose:hover{color:var(--ink);background:var(--surface2)}
+[data-pdetail]{cursor:pointer}
+.pname[data-pdetail]:hover,.crow:hover .cn{text-decoration:underline;text-decoration-color:var(--dim)}
+.mini .row{cursor:pointer;border-radius:8px;transition:background .15s}
+.mini .row:hover{background:var(--surface2)}
 .sheet h3{font-size:16px;margin-bottom:12px}
 .sheet label{font-size:12px;color:var(--muted);display:block;margin:12px 0 4px}
 .btnrow{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
@@ -244,6 +250,7 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
     <div class="btnrow"><button class="btn" id="closeSet">Close</button></div>
   </div>
 </div>
+<div class="modal" id="profModal"><div class="sheet" id="profSheet"></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="data.js"></script>
@@ -380,7 +387,7 @@ function profCard(p, showUni){
   }).join("")+`</div>`;
   return `<div class="pcard${note?" notecard":""}" id="pc-${p.id}">
     <div class="ptop"><div>
-      <div class="pname">${esc(p.name)}${showUni?` <span class="puni">· ${esc(p.uniName)}</span>`:""}</div>
+      <div class="pname" data-pdetail="${p.id}">${esc(p.name)}${showUni?` <span class="puni">· ${esc(p.uniName)}</span>`:""}</div>
     </div></div>
     <div class="badges">${profBadges(p)}</div>
     ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
@@ -393,6 +400,93 @@ function profCard(p, showUni){
     ${note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
   </div>`;
 }
+
+/* ---------- ECCV papers (shared by ECCV tab + detail modal) ---------- */
+let eccvPapersOpen = new Set();
+function papersHtml(e,pid){
+  const ids=e.paperIds||[]; const open=eccvPapersOpen.has(pid);
+  const shown=open?ids:ids.slice(0,3);
+  const list=shown.map(id=>{
+    const pp=ECCV.papers[id]; if(!pp) return "";
+    return `<div class="epaper">${esc(pp.title)}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
+  }).join("");
+  const rest=ids.length-3;
+  const toggle = rest>0 ? `<button class="more" data-morepapers="${pid}">${open?"show fewer papers":`show ${rest} more paper${rest>1?"s":""}`}</button>` : "";
+  return list+toggle;
+}
+
+/* ---------- professor detail modal ---------- */
+let modalProfId = null;
+function pipeHtml(p, ps){
+  if(p.flags.note) return "";
+  return `<div class="pipe">`+STAGES.map(([k,lbl])=>{
+    const hit = ps.stage && STAGE_ORDER[ps.stage]>=STAGE_ORDER[k] && !(k==="offer"&&ps.stage==="rejected") && !(k==="rejected"&&ps.stage!=="rejected");
+    const cls = hit ? "stg hit"+(k==="offer"?" g":k==="rejected"?" r":"") : "stg";
+    const dt = ps.dates[k] ? `<span class="sdate">${fdate(ps.dates[k])}</span>` : "";
+    return `<button class="${cls}" data-stg="${k}" data-p="${p.id}">${lbl}${dt}</button>`;
+  }).join("")+`</div>`;
+}
+function profDetailHtml(pid){
+  const p = D.professors.find(x=>x.id===pid);
+  if(!p) return '<div class="empty">Not found.</div>';
+  const ps = pstate(p.id);
+  const uni = uniById[p.uniId];
+  const e = eccvByKey[nameKey(p.name)];
+  const email = (p.contact||"").match(/[\w.+-]+@[\w.-]+\.\w+/); const em = email?email[0]:"";
+  return `
+    <button class="mclose" data-pmclose="1" aria-label="Close">✕</button>
+    <div class="pname" style="font-size:18px;padding-right:28px">${esc(p.name)}</div>
+    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(p.uniName)}${uni?(" · "+esc(uni.city)+(uni.city?", ":"")+esc(uni.country)):""}</div>
+    <div class="badges">${profBadges(p)}${e?`<span class="prio ${e.priority||"C"}">ECCV ${e.priority||"?"}</span>`:""}</div>
+    ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
+    <div class="secline" style="margin-top:14px">In their own words — what they're looking for</div>
+    <div class="stmt">${p.statement?fmtStmt(p.statement):'<span class="empty">No statement recorded.</span>'}</div>
+    ${p.contact?`<div class="contact"><b>In their own words — how to reach</b>${fmtStmt(p.contact)}${em?`<br><button class="copybtn" data-copy="${esc(em)}">⧉ copy ${esc(em)}</button>${p.flags.doNotEmail?"":` <a class="copybtn" href="${draftMail(p,em)}">✉ draft email</a>`}`:""}</div>`:""}
+    ${p.source?`<div class="src">Source: ${esc(p.source)}</div>`:""}
+    ${pipeHtml(p,ps)}
+    ${!p.flags.note && ps.stage==="emailed" ? `<button class="fubtn" data-fu="${p.id}">↻ log follow-up${(ps.fu&&ps.fu.length)?` (${ps.fu.length})`:""}</button><span class="fuline">last contact ${daysAgo(lastPing(ps))}d ago</span>` : ""}
+    ${e?`
+      <div class="secline" style="margin-top:14px">At ECCV 2026</div>
+      ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
+      ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
+      ${e.action?`<div class="stmt" style="color:var(--muted)">${esc(e.action)}</div>`:""}
+      ${papersHtml(e,p.id)}
+      <div class="appchips" style="margin-top:9px">
+        <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
+        <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
+      </div>`:""}
+    ${p.flags.note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
+  `;
+}
+function externalDetailHtml(xid){
+  const e = eccvByKey[xid.slice(3)];
+  if(!e) return '<div class="empty">Not found.</div>';
+  const ps = pstate(xid);
+  return `
+    <button class="mclose" data-pmclose="1" aria-label="Close">✕</button>
+    <div class="pname" style="font-size:18px;padding-right:28px">${esc(e.name)}</div>
+    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(e.institution)}${e.country?(" · "+esc(e.country)):""}</div>
+    <div class="badges"><span class="prio ${e.priority||"C"}">ECCV ${e.priority||"?"}</span></div>
+    ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
+    ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
+    ${e.action?`<div class="stmt" style="color:var(--muted)">${esc(e.action)}</div>`:""}
+    ${papersHtml(e,xid)}
+    <div class="appchips" style="margin-top:9px">
+      <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${xid}" data-est="plan">Plan to meet</button>
+      <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${xid}" data-est="met">Met ✓</button>
+    </div>
+    <div class="hint" style="margin-top:10px">Not on your outreach tracker — appears only in the ECCV attendee data, at a school you're targeting.</div>
+  `;
+}
+function renderProfModal(){
+  if(!modalProfId) return;
+  const sheet=$("#profSheet"); if(!sheet) return;
+  const top = sheet.scrollTop;
+  sheet.innerHTML = modalProfId.startsWith("ex-") ? externalDetailHtml(modalProfId) : profDetailHtml(modalProfId);
+  sheet.scrollTop = top;
+}
+function openProfModal(id){ modalProfId=id; renderProfModal(); $("#profModal").classList.add("open"); }
+function closeProfModal(){ modalProfId=null; $("#profModal").classList.remove("open"); }
 
 /* ---------- views ---------- */
 function renderToday(){
@@ -450,12 +544,12 @@ function renderToday(){
     <h2>Needs follow-up</h2>
     <div class="mini">${overdue.length?overdue.map(p=>{
       const t=lastPing(pstate(p.id));
-      return `<div class="row"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago">${daysAgo(t)}d silent</span></div>`;
+      return `<div class="row" data-pdetail="${p.id}"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago">${daysAgo(t)}d silent</span></div>`;
     }).join(""):'<div class="empty">Nothing overdue. Clean slate.</div>'}</div>
 
     <h2>Replied — act on these</h2>
     <div class="mini">${replied.length?replied.map(p=>
-      `<div class="row"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago" style="color:var(--green)">${pstate(p.id).stage}</span></div>`
+      `<div class="row" data-pdetail="${p.id}"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago" style="color:var(--green)">${pstate(p.id).stage}</span></div>`
     ).join(""):'<div class="empty">No replies logged yet.</div>'}</div>`;
 }
 
@@ -540,7 +634,7 @@ function renderPeople(){
     ? `<div class="board">`+list.map(p=>{
         const s=pstate(p.id).stage;
         const col=s?(s==="rejected"?"var(--red)":s==="emailed"?"var(--amber)":"var(--green)"):"var(--dim)";
-        return `<button class="crow" data-pjump="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cu">${esc(p.uniName)}</span><span class="cs">${s||"—"}</span></button>`;
+        return `<button class="crow" data-pdetail="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cu">${esc(p.uniName)}</span><span class="cs">${s||"—"}</span></button>`;
       }).join("")+`</div>`
     : list.map(p=>profCard(p,true)).join("");
   $("#v-people").innerHTML = `
@@ -581,7 +675,6 @@ function renderDates(){
   $("#icsBtn").onclick=exportICS;
 }
 
-let eccvPapersOpen = new Set();
 function renderEccv(){
   const matches=[]; const mk=new Set();
   D.professors.filter(p=>!p.flags.note).forEach(p=>{
@@ -603,17 +696,6 @@ function renderEccv(){
   const nPlan=matches.filter(m=>pstate(m.p.id).eccv==="plan").length;
   const nMet=matches.filter(m=>pstate(m.p.id).eccv==="met").length;
   const prio=p=>`<span class="prio ${p||"C"}">${p||"?"}</span>`;
-  const papersHtml=(e,pid)=>{
-    const ids=e.paperIds||[]; const open=eccvPapersOpen.has(pid);
-    const shown=open?ids:ids.slice(0,3);
-    const list=shown.map(id=>{
-      const pp=ECCV.papers[id]; if(!pp) return "";
-      return `<div class="epaper">${esc(pp.title)}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
-    }).join("");
-    const rest=ids.length-3;
-    const toggle = rest>0 ? `<button class="more" data-morepapers="${pid}">${open?"show fewer papers":`show ${rest} more paper${rest>1?"s":""}`}</button>` : "";
-    return list+toggle;
-  };
 
   $("#v-eccv").innerHTML = `
     <h2>Your targets at ECCV 2026</h2>
@@ -628,7 +710,7 @@ function renderEccv(){
       const ps=pstate(p.id);
       return `<div class="pcard">
         <div class="ptop"><div>
-          <div class="pname">${esc(p.name)} <span class="puni">· ${esc(p.uniName)}</span></div>
+          <div class="pname" data-pdetail="${p.id}">${esc(p.name)} <span class="puni">· ${esc(p.uniName)}</span></div>
         </div>${prio(e.priority)}</div>
         <div class="badges">
           ${ps.stage?`<span class="bdg ${ps.stage==="rejected"?"grey":ps.stage==="emailed"?"amber":"green"}">${ps.stage.toUpperCase()}</span>`:'<span class="bdg grey">NOT CONTACTED</span>'}
@@ -651,7 +733,7 @@ function renderEccv(){
     <div class="hint" style="margin-bottom:8px">Not on your outreach list, but faculty at schools you're targeting — worth a hello at their poster. Star the ones you want to catch.</div>
     <div class="board">${others.map(({e,uni})=>{
       const xid="ex-"+nameKey(e.name); const on=pstate(xid).eccv==="plan";
-      return `<div class="crow">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span><button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
+      return `<div class="crow" data-pdetail="${xid}">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span><button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
     }).join("")}</div>
     <div class="hint" style="margin-top:10px">${esc(ECCV.note)} Data generated ${esc(ECCV.generated)} from the ECCV navigator audit.</div>`;
 }
@@ -669,7 +751,7 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pjump],[data-sort],[data-eccv],[data-morepapers]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers]");
   if(!t) return;
   if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -679,7 +761,7 @@ document.addEventListener("click",e=>{
     else { ps.stage=stg; if(!ps.dates[stg]) ps.dates[stg]=Date.now(); }
     touch(ps);
     // re-render current view but keep scroll
-    const y=window.scrollY; render(); window.scrollTo(0,y);
+    const y=window.scrollY; render(); window.scrollTo(0,y); renderProfModal();
   }
   else if(t.dataset.more){ const el=$("#st-"+t.dataset.more); el.classList.toggle("clip"); t.textContent=el.classList.contains("clip")?"show full":"collapse"; }
   else if(t.dataset.go){ view=t.dataset.go; if(t.dataset.preset){pFilters.preset=t.dataset.preset;} render(); window.scrollTo(0,0); }
@@ -691,12 +773,13 @@ document.addEventListener("click",e=>{
   else if(t.dataset.cont){ sFilters.cont = sFilters.cont===t.dataset.cont?"":t.dataset.cont; renderSchools(); }
   else if(t.dataset.sort){ sFilters.sort = sFilters.sort===t.dataset.sort?"":t.dataset.sort; renderSchools(); }
   else if(t.dataset.sx){ if(t.dataset.sx==="open") sVisible.forEach(id=>openUnis.add(id)); else openUnis.clear(); renderSchools(); }
-  else if(t.dataset.fu){ const ps=pstate(t.dataset.fu); (ps.fu=ps.fu||[]).push(Date.now()); touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); toast("Follow-up logged — clock reset"); }
+  else if(t.dataset.fu){ const ps=pstate(t.dataset.fu); (ps.fu=ps.fu||[]).push(Date.now()); touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); renderProfModal(); toast("Follow-up logged — clock reset"); }
   else if(t.dataset.doc){ const us=ustate(t.dataset.u); us.docs=us.docs||{}; us.docs[t.dataset.doc]=!us.docs[t.dataset.doc]; touch(us); const y=window.scrollY; render(); window.scrollTo(0,y); }
   else if(t.dataset.compact){ pFilters.compact=!pFilters.compact; renderPeople(); }
-  else if(t.dataset.eccv){ const ps=pstate(t.dataset.eccv); ps.eccv = ps.eccv===t.dataset.est?null:t.dataset.est; touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); }
-  else if(t.dataset.morepapers){ const id=t.dataset.morepapers; eccvPapersOpen.has(id)?eccvPapersOpen.delete(id):eccvPapersOpen.add(id); const y=window.scrollY; renderEccv(); window.scrollTo(0,y); }
-  else if(t.dataset.pjump){ pFilters.compact=false; renderPeople(); const el=$("#pc-"+t.dataset.pjump); if(el) el.scrollIntoView({block:"center"}); }
+  else if(t.dataset.eccv){ const ps=pstate(t.dataset.eccv); ps.eccv = ps.eccv===t.dataset.est?null:t.dataset.est; touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); renderProfModal(); }
+  else if(t.dataset.morepapers){ const id=t.dataset.morepapers; eccvPapersOpen.has(id)?eccvPapersOpen.delete(id):eccvPapersOpen.add(id); const y=window.scrollY; if(view==="eccv") renderEccv(); window.scrollTo(0,y); renderProfModal(); }
+  else if(t.dataset.pdetail){ openProfModal(t.dataset.pdetail); }
+  else if(t.dataset.pmclose){ closeProfModal(); }
   else if(t.dataset.deldate){ const d=state.dates[t.dataset.deldate]; if(d){ d.del=true; touch(d); renderDates(); toast("Date removed"); } }
   else if(t.dataset.copy){
     navigator.clipboard.writeText(t.dataset.copy)
@@ -715,6 +798,8 @@ $("#gearBtn").onclick=()=>{ $("#setUrl").value=cfg.url; $("#setTok").value=cfg.t
   $("#settings").classList.add("open"); };
 $("#closeSet").onclick=()=>$("#settings").classList.remove("open");
 $("#settings").addEventListener("click",e=>{if(e.target.id==="settings")$("#settings").classList.remove("open");});
+$("#profModal").addEventListener("click",e=>{if(e.target.id==="profModal")closeProfModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeProfModal();});
 $("#saveSet").onclick=()=>{
   cfg.url=$("#setUrl").value.trim().replace(/\/$/,""); cfg.tok=$("#setTok").value.trim();
   localStorage.setItem("phdWorkerUrl",cfg.url); localStorage.setItem("phdWorkerTok",cfg.tok);
