@@ -135,6 +135,8 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
 .mclose:hover{color:var(--ink);background:var(--surface2)}
 [data-pdetail]{cursor:pointer}
 .pname[data-pdetail]:hover,.crow:hover .cn{text-decoration:underline;text-decoration-color:var(--dim)}
+.brow[data-pdetail]{transition:background .15s}
+.brow[data-pdetail]:hover{background:var(--surface2)}
 .mini .row{cursor:pointer;border-radius:8px;transition:background .15s}
 .mini .row:hover{background:var(--surface2)}
 .sheet h3{font-size:16px;margin-bottom:12px}
@@ -340,9 +342,22 @@ function draftMail(p, em){
   return `mailto:${em}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
 }
 function allDeadlines(){
+  const built = D.deadlines.map((d,i)=>({...d,dlid:"b"+i}));
   const custom = Object.entries(state.dates).filter(([,d])=>!d.del)
-    .map(([id,d])=>({date:d.date,label:d.label,uni:d.uni,custom:true,id}));
-  return D.deadlines.concat(custom).map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+    .map(([id,d])=>({date:d.date,label:d.label,uni:d.uni,custom:true,id,dlid:"c"+id}));
+  return built.concat(custom).map(d=>({...d,dl:daysTo(d.date)})).sort((a,b)=>a.dl-b.dl);
+}
+function uniKeyNorm(s){
+  return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ")
+    .replace(/\b(the|of|at|in|university|univ|institute|institution|technology|tech|school|college)\b/g,"")
+    .replace(/\s+/g," ").trim();
+}
+function findUni(name){
+  if(!name) return null;
+  const exact = D.universities.find(u=>u.name===name);
+  if(exact) return exact;
+  const k = uniKeyNorm(name); if(!k) return null;
+  return D.universities.find(u=>{const uk=uniKeyNorm(u.name); return uk&&(uk.includes(k)||k.includes(uk));}) || null;
 }
 function exportICS(){
   const evs = allDeadlines().filter(d=>d.dl>=-1);
@@ -478,11 +493,47 @@ function externalDetailHtml(xid){
     <div class="hint" style="margin-top:10px">Not on your outreach tracker — appears only in the ECCV attendee data, at a school you're targeting.</div>
   `;
 }
+function dlDetailHtml(dlid){
+  const d = allDeadlines().find(x=>x.dlid===dlid);
+  if(!d) return '<div class="empty">Not found.</div>';
+  const dlc = d.dl<0?"var(--dim)":d.dl<=7?"var(--red)":d.dl<=30?"var(--amber)":"var(--green)";
+  const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
+  const uni = findUni(d.uni);
+  const us = uni?ustate(uni.id):null;
+  const profsAtUni = uni?(profsByUni[uni.id]||[]).filter(p=>!p.flags.note):[];
+  const info = uni?[
+    uni.program?["Program",esc(uni.program)]:null,
+    uni.deadlineCell?["Deadline",esc(uni.deadlineCell)]:null,
+    uni.stipend?["Stipend",esc(uni.stipend)]:null,
+    uni.langEnv?["Language",esc(uni.langEnv).replace(/\n/g," ")]:null,
+    uni.portal?["Portal",`<a href="https://${esc(uni.portal)}" target="_blank" rel="noopener">${esc(uni.portal)}</a>`]:null,
+  ].filter(Boolean):[];
+  return `
+    <button class="mclose" data-pmclose="1" aria-label="Close">✕</button>
+    <div class="pname" style="font-size:18px;padding-right:28px">${esc(d.label)}</div>
+    <div class="puni" style="font-size:13px;margin-bottom:8px">${d.date}${d.uni?" · "+esc(d.uni):""}</div>
+    <div class="badges"><span class="prio" style="border-color:${dlc};color:${dlc}">${t}</span></div>
+    ${uni?`
+      ${info.length?`<div class="uinfo" style="margin-top:12px">${info.map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join("")}</div>`:""}
+      <div class="secline" style="margin-top:14px">Application status</div>
+      <div class="appchips">${APP_STAGES.map(([k,l])=>`<button class="appc${us.app===k?" on":""}" data-app="${k}" data-u="${uni.id}">${l}</button>`).join("")}</div>
+      ${uni.locationNotes?`<div class="secline">Location</div><div class="locnote">${fmtStmt(uni.locationNotes)}</div>`:""}
+      ${uni.overlap?`<div class="secline">Why this school (fit)</div><div class="locnote">${fmtStmt(uni.overlap)}</div>`:""}
+      ${profsAtUni.length?`<div class="secline">Professors (${profsAtUni.length})</div><div class="board">${profsAtUni.map(p=>{
+        const s=pstate(p.id).stage;
+        const col=s?(s==="rejected"?"var(--red)":s==="emailed"?"var(--amber)":"var(--green)"):"var(--dim)";
+        return `<div class="crow" data-pdetail="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cs">${s||"—"}</span></div>`;
+      }).join("")}</div>`:""}
+    `:`<div class="hint" style="margin-top:12px">This deadline isn't tied to a single tracked school — check the Schools tab for the relevant universities.</div>`}
+  `;
+}
 function renderProfModal(){
   if(!modalProfId) return;
   const sheet=$("#profSheet"); if(!sheet) return;
   const top = sheet.scrollTop;
-  sheet.innerHTML = modalProfId.startsWith("ex-") ? externalDetailHtml(modalProfId) : profDetailHtml(modalProfId);
+  sheet.innerHTML = modalProfId.startsWith("ex-") ? externalDetailHtml(modalProfId)
+    : modalProfId.startsWith("dl-") ? dlDetailHtml(modalProfId.slice(3))
+    : profDetailHtml(modalProfId);
   sheet.scrollTop = top;
 }
 function openProfModal(id){ modalProfId=id; renderProfModal(); $("#profModal").classList.add("open"); }
@@ -512,7 +563,7 @@ function renderToday(){
     <div class="board">${future.map(d=>{
       const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
       const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
-      return `<div class="brow ${cls}"><span class="tminus">${t}</span>
+      return `<div class="brow ${cls}" data-pdetail="dl-${d.dlid}"><span class="tminus">${t}</span>
         <div class="bwhat"><div class="l1">${esc(d.label)}</div>
         <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div></div>`;
     }).join("")||'<div class="empty">No deadlines loaded</div>'}</div>
@@ -653,7 +704,7 @@ function renderDates(){
   $("#v-dates").innerHTML = `<h2>All tracked dates</h2><div class="board">${up.map(d=>{
     const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
     const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
-    return `<div class="brow ${cls}"><span class="tminus">${t}</span>
+    return `<div class="brow ${cls}" data-pdetail="dl-${d.dlid}"><span class="tminus">${t}</span>
       <div class="bwhat"><div class="l1">${esc(d.label)}</div>
       <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div>
       ${d.custom?`<button class="delx" data-deldate="${d.id}" aria-label="Delete date">✕</button>`:""}</div>`;
