@@ -153,6 +153,9 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .pgrid>.pcard,#v-eccv .pcard{background:var(--surface);box-shadow:var(--shadow)}
 .pcard.notecard{background:transparent;border-style:dashed;box-shadow:none}
 .ptop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pstar{font-size:16px;color:var(--dim);padding:2px 4px;flex-shrink:0;line-height:1}
+.pstar.on{color:var(--amber)}
+.pstar:hover{color:var(--amber)}
 .pname{font-weight:700;font-size:15px}
 .puni{font-size:12px;color:var(--muted);font-weight:400}
 .badges{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
@@ -179,7 +182,11 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .stg.hit.r{border-color:var(--red);color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent)}
 .sdate{font-family:var(--mono);font-size:10px;display:block;margin-top:2px;font-weight:400}
 .noteta{margin-top:8px;min-height:38px;font-size:13px;resize:vertical}
-.notelbl{font-size:11px;color:var(--dim);margin-top:8px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.notelbl{font-size:11px;color:var(--dim);margin-top:8px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:8px}
+.notelbl .savedhint{font-size:10px;color:var(--green);text-transform:none;letter-spacing:0;font-weight:600;opacity:0;transition:opacity .3s;font-family:var(--mono)}
+.notelbl .savedhint.show{opacity:1}
+.notesavebtn{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.notesavebtn:hover{color:var(--ink);border-color:var(--line2)}
 
 /* ---------- kanban ---------- */
 .kb{display:grid;grid-auto-flow:column;grid-auto-columns:min(268px,78vw);gap:12px;overflow-x:auto;padding:4px 2px 14px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
@@ -187,9 +194,13 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .kcol .khead{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .kcol .khead .kn{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:500}
 .kcards{overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:7px}
-.kcard{background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;cursor:pointer;text-align:left;transition:border-color .12s}
+.kcard{position:relative;background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:9px 28px 9px 10px;cursor:pointer;text-align:left;transition:border-color .12s}
 .kcard:hover{border-color:var(--line2)}
+.kcard.starred{border-color:color-mix(in srgb,var(--amber) 50%,var(--line))}
+.kstar{position:absolute;top:5px;right:4px;font-size:14px;color:var(--dim);padding:3px 5px;line-height:1}
+.kstar.on{color:var(--amber)}
 .kcard .kn1{font-weight:600;font-size:13px;line-height:1.3}
+.ktier{font-family:var(--mono);font-size:9px;font-weight:700;margin-left:5px;padding:0 4px;border-radius:4px;border:1px solid var(--line);color:var(--muted);vertical-align:1px}
 .kcard .kn2{font-size:11.5px;color:var(--muted);margin-top:1px}
 .kcard .kmeta{display:flex;align-items:center;gap:6px;margin-top:6px}
 .kcard .kago{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
@@ -320,6 +331,15 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 .stmt a,.contact a,.locnote a,.src a{color:var(--blue);word-break:break-all}
 .epaper a{color:inherit;text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--blue) 45%,transparent)}
 .epaper a:hover{color:var(--blue)}
+
+/* ---------- collaboration-cluster warning (co-authors at same institution) ---------- */
+.cluster{background:var(--surface);border:1px solid var(--teal);border-left:3px solid var(--teal);border-radius:var(--r);padding:14px;margin:10px 0;box-shadow:var(--shadow)}
+.cluster .chead{font-size:12px;font-weight:700;color:var(--teal);letter-spacing:.04em;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.cluster .crole{font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;border:1px solid var(--teal);color:var(--teal)}
+.cluster .cmembers{font-size:12.5px;color:var(--muted);margin-bottom:8px;line-height:1.5}
+.cluster .cmembers b{color:var(--ink);font-weight:600}
+.cluster .cguide{font-size:13px;color:var(--body);line-height:1.55;margin-top:6px}
+.cluster .cguide b{color:var(--ink);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;color:var(--dim)}
 
 /* ---------- drafted outreach emails ---------- */
 .edraft{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
@@ -459,6 +479,7 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 <script src="eccv.js"></script>
 <script src="links.js"></script>
 <script src="emails.js"></script>
+<script src="clusters.js"></script>
 <script>
 "use strict";
 const D = window.PHD_DATA;
@@ -526,15 +547,18 @@ async function pullMergePush(showToast){
     render();
   }catch(e){ setDot("err"); if(showToast) toast("Sync failed — check URL/token"); }
 }
+async function pushNow(){
+  clearTimeout(syncTimer);
+  if(!cfg.url||!cfg.tok) return setDot("local");
+  try{
+    const w = await fetch(cfg.url,{method:"PUT",headers:{"X-Auth-Token":cfg.tok,"Content-Type":"application/json"},body:JSON.stringify(state)});
+    setDot(w.ok?"ok":"err");
+  }catch(e){ setDot("err"); }
+}
 function queueSync(){
   if(!cfg.url||!cfg.tok) return setDot("local");
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(async()=>{
-    try{
-      const w = await fetch(cfg.url,{method:"PUT",headers:{"X-Auth-Token":cfg.tok,"Content-Type":"application/json"},body:JSON.stringify(state)});
-      setDot(w.ok?"ok":"err");
-    }catch(e){ setDot("err"); }
-  }, 900);
+  syncTimer=setTimeout(pushNow, 900);
 }
 
 /* ---------- helpers ---------- */
@@ -570,9 +594,18 @@ function nameKey(n){
 }
 const LINKS = window.PHD_LINKS || {profs:{},papers:{}};
 const EMAILS = (window.PHD_EMAILS||{profs:{}}).profs;
+const CLUSTERDATA = window.PHD_CLUSTERS || {clusters:[],profs:{}};
+const CLUSTER_BY_ID = {}; CLUSTERDATA.clusters.forEach(c=>CLUSTER_BY_ID[c.id]=c);
+function clusterFor(p){ const cid = CLUSTERDATA.profs[p.id]; return cid ? CLUSTER_BY_ID[cid] : null; }
 const ECCV = window.ECCV_DATA || {professors:[],papers:{},generated:"",note:""};
 const eccvByKey = {}; ECCV.professors.forEach(e=>eccvByKey[nameKey(e.name)]=e);
 const ECCV_RANK = {S:4,A:3,B:2,C:1};
+/* combined priority for sorting: ECCV S/A/B/C tier when the professor has one (from eccv.js),
+   else falls in below C but still ranked by school priority so everyone gets a stable order */
+function profPriorityTier(p){
+  const e = eccvByKey[nameKey(p.name)];
+  return e ? (ECCV_RANK[e.priority]||0) : 0;
+}
 /* profile links from links.js (source spreadsheets + web-verified) with eccv.js fallback.
    Combined entries like "Hao Su / Zhuowen Tu" get one link group per person. */
 function linksForName(nm){
@@ -597,6 +630,7 @@ function profLinksHtml(name, withTopics){
     `<div class="ltopics"><b>ECCV work${multi?" · "+lastName(g.nm):""}:</b> ${esc(g.topics)}</div>`).join("");
   return out;
 }
+function labFor(name){ return (LINKS.profs[nameKey(name)]||{}).lab || ""; }
 const CONT_LBL = {eu:"EU",na:"N.AM",asia:"ASIA",aus:"AUS"};
 function contChip(u){ return u&&u.continent?`<span class="contchip ${u.continent}">${CONT_LBL[u.continent]||u.continent}</span>`:""; }
 function uniLoc(u){ return u?[u.city,u.country].filter(Boolean).join(", "):""; }
@@ -659,6 +693,8 @@ function profBadges(p){
   if(p.flags.recruiting && !p.flags.warning) b.push('<span class="bdg green">RECRUITING</span>');
   if(p.flags.warning) b.push('<span class="bdg red">⚠ CAUTION</span>');
   if(!p.flags.doNotEmail && !p.flags.form && appMethod(p)==="email") b.push('<span class="bdg grey">EMAIL</span>');
+  const c = clusterFor(p);
+  if(c) b.push(nameKey(c.primary)===nameKey(p.name) ? '<span class="bdg teal">🔗 EMAIL FIRST</span>' : '<span class="bdg amber">🔗 WAIT — see details</span>');
   return b.join("");
 }
 function stageMark(p){ // dashboard dot class for a professor
@@ -683,8 +719,8 @@ function profCard(p, showUni){
   return `<div class="pcard${note?" notecard":""}" id="pc-${p.id}">
     <div class="ptop"><div>
       <div class="pname" data-pdetail="${p.id}">${esc(p.name)}</div>
-      ${showUni?`<div class="puni2">${esc(p.uniName)}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>`:""}
-    </div></div>
+      ${showUni?`<div class="puni2">${esc(p.uniName)}${labFor(p.name)?` · <span class="uloc">${esc(labFor(p.name))}</span>`:""}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>`:""}
+    </div>${note?"":`<button class="pstar${ps.star?" on":""}" data-star="${p.id}" aria-label="Star">${ps.star?"★":"☆"}</button>`}</div>
     <div class="badges">${profBadges(p)}</div>
     ${note?"":profLinksHtml(p.name,false)}
     ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
@@ -694,7 +730,7 @@ function profCard(p, showUni){
     ${p.source?`<div class="src">Source: ${linkify(esc(p.source))}</div>`:""}
     ${pipe}
     ${!note && ps.stage==="emailed" ? `<button class="fubtn" data-fu="${p.id}">↻ log follow-up${(ps.fu&&ps.fu.length)?` (${ps.fu.length})`:""}</button><span class="fuline">last contact ${daysAgo(lastPing(ps))}d ago</span>` : ""}
-    ${note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
+    ${note?"":`<div class="notelbl">Notes <span class="savedhint">saved ✓</span><button class="notesavebtn" data-savenote="${p.id}">Save</button></div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
   </div>`;
 }
 
@@ -734,8 +770,9 @@ function profDetailHtml(pid){
   const email = (p.contact||"").match(/[\w.+-]+@[\w.-]+\.\w+/); const em = email?email[0]:"";
   return `
     <button class="mclose" data-pmclose="1" aria-label="Close">✕</button>
-    <div class="pname" style="font-size:18px;padding-right:28px">${esc(p.name)}</div>
-    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(p.uniName)}${uni?(" · "+esc(uni.city)+(uni.city?", ":"")+esc(uni.country)):""} ${contChip(uni)}</div>
+    <button class="pstar${ps.star?" on":""}" style="position:absolute;top:10px;right:44px;font-size:17px" data-star="${p.id}" aria-label="Star">${ps.star?"★":"☆"}</button>
+    <div class="pname" style="font-size:18px;padding-right:52px">${esc(p.name)}</div>
+    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(p.uniName)}${labFor(p.name)?" · "+esc(labFor(p.name)):""}${uni?(" · "+esc(uni.city)+(uni.city?", ":"")+esc(uni.country)):""} ${contChip(uni)}</div>
     <div class="badges">${profBadges(p)}${e?`<span class="prio ${e.priority||"C"}">ECCV ${e.priority||"?"}</span>`:""}</div>
     ${profLinksHtml(p.name,true)}
     ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
@@ -751,22 +788,24 @@ function profDetailHtml(pid){
       ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
       ${e.action?`<div class="stmt" style="color:var(--muted)">${esc(e.action)}</div>`:""}
       ${papersHtml(e,p.id)}
+      ${clusterBlockHtml(p)}
       ${draftBlockHtml(p)}
       <div class="appchips" style="margin-top:9px">
         <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
         <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
       </div>`:""}
-    ${p.flags.note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
+    ${p.flags.note?"":`<div class="notelbl">Notes <span class="savedhint">saved ✓</span><button class="notesavebtn" data-savenote="${p.id}">Save</button></div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
   `;
 }
 function externalDetailHtml(xid){
   const e = eccvByKey[xid.slice(3)];
   if(!e) return '<div class="empty">Not found.</div>';
   const ps = pstate(xid);
+  const lab = labFor(e.name);
   return `
     <button class="mclose" data-pmclose="1" aria-label="Close">✕</button>
     <div class="pname" style="font-size:18px;padding-right:28px">${esc(e.name)}</div>
-    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(e.institution)}${e.country?(" · "+esc(e.country)):""}</div>
+    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(e.institution)}${lab?" · "+esc(lab):""}${e.country?(" · "+esc(e.country)):""}</div>
     <div class="badges"><span class="prio ${e.priority||"C"}">ECCV ${e.priority||"?"}</span></div>
     ${profLinksHtml(e.name,true)}
     ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
@@ -957,7 +996,7 @@ function renderSchools(){
         ${u.overlap?`<div class="secline">Why this school (fit)</div><div class="locnote">${fmtStmt(u.overlap)}</div>`:""}
         <div class="secline">Professors (${real.length})</div>
         ${ps.map(p=>profCard(p,false)).join("")}
-        <div class="notelbl">School notes</div>
+        <div class="notelbl">School notes <span class="savedhint">saved ✓</span><button class="notesavebtn" data-saveunote="${u.id}">Save</button></div>
         <textarea class="noteta" data-unote="${u.id}" placeholder="portal account made? LoRs requested? fee paid?">${esc(us.notes)}</textarea>
       </div>
     </div>`;
@@ -1040,15 +1079,24 @@ function renderPipeline(){
     real = real.filter(p=>(p.name+" "+p.uniName).toLowerCase().includes(q)); }
   const cols = KCOLS.map(([stage,label,color])=>{
     let list = real.filter(p=>pstate(p.id).stage===stage);
-    if(stage==="emailed") list.sort((a,b)=>lastPing(pstate(a.id))-lastPing(pstate(b.id)));
+    list.sort((a,b)=>{
+      const as=pstate(a.id).star?1:0, bs=pstate(b.id).star?1:0;
+      if(as!==bs) return bs-as; // starred always first
+      const at=profPriorityTier(a), bt=profPriorityTier(b);
+      if(at!==bt) return bt-at; // then ECCV S>A>B>C tier (untiered profs last)
+      if(stage==="emailed"){ const d=lastPing(pstate(a.id))-lastPing(pstate(b.id)); if(d!==0) return d; }
+      return a.uniPriority-b.uniPriority; // then school priority
+    });
     const cards = list.map(p=>{
       const ps=pstate(p.id);
       const t = stage&&ps.dates[stage] ? ps.dates[stage] : 0;
       const silent = stage==="emailed" ? daysAgo(lastPing(ps)) : null;
       const next = KNEXT[stage];
       const uni=uniById[p.uniId];
-      return `<div class="kcard" data-pdetail="${p.id}">
-        <div class="kn1">${esc(p.name)}</div>
+      const tier=profPriorityTier(p);
+      return `<div class="kcard${ps.star?" starred":""}" data-pdetail="${p.id}">
+        <button class="kstar${ps.star?" on":""}" data-star="${p.id}" aria-label="Star">${ps.star?"★":"☆"}</button>
+        <div class="kn1">${esc(p.name)}${tier?`<span class="ktier">${{4:"S",3:"A",2:"B",1:"C"}[tier]}</span>`:""}</div>
         <div class="kn2">${esc(p.uniName)}${uni&&uni.city?` · ${esc(uni.city)}`:""} ${contChip(uni)}</div>
         <div class="kmeta">
           ${silent!==null?`<span class="kago${silent>=14?" late":""}">${silent}d silent</span>`:t?`<span class="kago">since ${fdate(t)}</span>`:`<span class="kago"></span>`}
@@ -1063,7 +1111,7 @@ function renderPipeline(){
   }).join("");
   $("#v-pipeline").innerHTML = `
     <h2>Outreach pipeline</h2>
-    <div class="hint" style="margin-bottom:10px">Every professor by stage. Click a card for the full profile; use → to advance a stage (date auto-stamped).</div>
+    <div class="hint" style="margin-bottom:10px">Every professor by stage, sorted ★ starred first, then ECCV S→A→B→C priority, then school rank. Click a card for the full profile; ☆ to star; use → to advance a stage (date auto-stamped).</div>
     <input class="search" id="ksearch" placeholder="Search professors, schools…" value="${esc(kFilters.q)}">
     <div class="kb" style="margin-top:12px">${cols}</div>`;
   const ks=$("#ksearch");
@@ -1105,11 +1153,28 @@ function renderDates(){
   $("#icsBtn").onclick=exportICS;
 }
 
-let eFilters = {q:"",prio:"",cont:"",stat:"",draft:""};
+let eFilters = {q:"",prio:"",cont:"",stat:"",draft:"",oview:"compact"};
 function eccvStatus(id){ const v=pstate(id).eccv; return v==="plan"?"plan":v==="met"?"met":"notcontacted"; }
 /* drafted outreach email/guidance for one professor, from emails.js — cross-referencing their
    own profile page + recent ECCV papers with Hrithik's profile.md (M3Grounder/DoCoG/Patram).
    Rendered inline on every card for that professor (ECCV grid + the profile-detail modal). */
+/* collaboration-cluster block: warns when this professor has a close, same-institution
+   co-author (real ECCV 2026 co-authorship, from clusters.js) also on your radar, so you don't
+   cold-email a tight-knit group and have them compare notes. Different advice for PhD outreach
+   (People tab — sequencing matters) vs an ECCV meetup (ECCV tab — much lower stakes). */
+function clusterBlockHtml(p){
+  const c = clusterFor(p);
+  if(!c) return "";
+  const isPrimary = nameKey(c.primary)===nameKey(p.name);
+  const role = isPrimary ? "EMAIL FIRST" : "WAIT";
+  const others = c.members.filter(m=>m.name!==p.name).map(m=>m.name);
+  return `<div class="cluster">
+    <div class="chead">🔗 Collaboration cluster at ${esc(c.institution)} <span class="crole">${role}</span></div>
+    <div class="cmembers">${esc(c.edgeSummary)}</div>
+    <div class="cguide"><b>For PhD outreach (People tab)</b>${esc(c.phd_guidance)}</div>
+    <div class="cguide"><b>For an ECCV meetup (ECCV tab)</b>${esc(c.eccv_guidance)}</div>
+  </div>`;
+}
 function draftKind(p){ const d=EMAILS[p.id]; return d?d.kind:"none"; }
 function draftBlockHtml(p){
   const d = EMAILS[p.id];
@@ -1193,7 +1258,7 @@ function renderEccv(){
       return `<div class="pcard">
         <div class="ptop"><div>
           <div class="pname" data-pdetail="${p.id}">${esc(p.name)}</div>
-          <div class="puni2">${esc(p.uniName)}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>
+          <div class="puni2">${esc(p.uniName)}${labFor(p.name)?` · <span class="uloc">${esc(labFor(p.name))}</span>`:""}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>
         </div>${prio(e.priority)}</div>
         <div class="badges">
           ${ps.stage?`<span class="bdg ${ps.stage==="rejected"?"grey":ps.stage==="emailed"?"amber":"green"}">${ps.stage.toUpperCase()}</span>`:'<span class="bdg grey">NOT CONTACTED</span>'}
@@ -1206,6 +1271,7 @@ function renderEccv(){
         ${p.contact?`<div class="contact"><b>In their own words — how to reach</b>${fmtStmt(p.contact)}</div>`:""}
         ${p.statement?`<div class="contact"><b>In their own words — what they're looking for</b>${fmtStmt(p.statement)}</div>`:""}
         ${papersHtml(e,p.id)}
+        ${clusterBlockHtml(p)}
         ${draftBlockHtml(p)}
         <div class="appchips" style="margin-top:9px">
           <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
@@ -1214,12 +1280,34 @@ function renderEccv(){
       </div>`;
     }).join("")||'<div class="empty">No matches for these filters.</div>'}</div>
 
-    <h2>Also at ECCV from your target schools (${oList.length} of ${others.length})</h2>
+    <h2 style="margin-bottom:0">Also at ECCV from your target schools (${oList.length} of ${others.length})</h2>
+    <div class="fbar" style="padding-top:6px">
+      ${[["compact","≡ Compact"],["depth","☰ In depth"]].map(([k,l])=>`<button class="fchip${eFilters.oview===k?" on":""}" data-oview="${k}">${l}</button>`).join("")}
+    </div>
     <div class="hint" style="margin-bottom:8px">Not on your outreach list, but faculty at schools you're targeting — worth a hello at their poster. Star the ones you want to catch.</div>
-    <div class="board">${oList.map(({e,uni})=>{
+    ${eFilters.oview==="depth" ? `<div class="pgrid">${oList.map(({e,uni})=>{
       const xid="ex-"+nameKey(e.name); const on=pstate(xid).eccv==="plan";
-      return `<div class="crow" data-pdetail="${xid}">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span>${contChip(uni)}<button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
-    }).join("")||'<div class="empty">No matches for these filters.</div>'}</div>
+      const lab=labFor(e.name);
+      return `<div class="pcard">
+        <div class="ptop"><div>
+          <div class="pname" data-pdetail="${xid}">${esc(e.name)}</div>
+          <div class="puni2">${esc(e.institution)}${lab?` · <span class="uloc">${esc(lab)}</span>`:""}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>
+        </div>${prio(e.priority)}</div>
+        ${profLinksHtml(e.name,true)}
+        ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
+        ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
+        ${e.action?`<div class="stmt" style="color:var(--muted);margin-top:4px">${esc(e.action)}</div>`:""}
+        ${papersHtml(e,xid)}
+        <div class="appchips" style="margin-top:9px">
+          <button class="appc${on?" on":""}" data-eccv="${xid}" data-est="plan">${on?"★ Planned":"☆ Plan to meet"}</button>
+        </div>
+      </div>`;
+    }).join("")||'<div class="empty">No matches for these filters.</div>'}</div>`
+    : `<div class="board">${oList.map(({e,uni})=>{
+      const xid="ex-"+nameKey(e.name); const on=pstate(xid).eccv==="plan";
+      const lab=labFor(e.name);
+      return `<div class="crow" data-pdetail="${xid}">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}${lab?` · ${esc(lab)}`:""}</span>${contChip(uni)}<button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
+    }).join("")||'<div class="empty">No matches for these filters.</div>'}</div>`}
     <div class="hint" style="margin-top:10px">${esc(ECCV.note)} Data generated ${esc(ECCV.generated)} from the ECCV navigator audit.</div>`;
   const es=$("#esearch");
   es.addEventListener("input",e=>{eFilters.q=e.target.value; renderEccv(); const ns=$("#esearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
@@ -1228,6 +1316,36 @@ function renderEccv(){
 /* ---------- render + events ---------- */
 const VIEWS = ["today","schools","people","pipeline","dates","eccv"];
 let view="today";
+function setView(v){ view=v; try{ localStorage.setItem("phdView", v); }catch(e){} }
+/* remember scroll position per tab so a reload restores where you were, not just the tab */
+let scrollSaveTimer=null, restoringScroll=false;
+function saveScroll(){
+  if(restoringScroll) return; // ignore scroll events fired by our own restore-in-progress
+  try{
+    const s = JSON.parse(localStorage.getItem("phdScroll")||"{}");
+    s[view] = window.scrollY;
+    localStorage.setItem("phdScroll", JSON.stringify(s));
+  }catch(e){}
+}
+function getSavedScroll(v){
+  try{ return (JSON.parse(localStorage.getItem("phdScroll")||"{}"))[v] || 0; }catch(e){ return 0; }
+}
+function restoreScroll(v){
+  // web-font swap / late reflow can grow page height a moment after first paint, clamping an
+  // early scrollTo back to 0 — keep re-asserting the target across several frames to outlast that.
+  restoringScroll = true;
+  const target = getSavedScroll(v);
+  let tries = 0;
+  const attempt = ()=>{
+    window.scrollTo(0, target);
+    tries++;
+    if(tries<8) requestAnimationFrame(attempt); else setTimeout(()=>{restoringScroll=false;},60);
+  };
+  requestAnimationFrame(attempt);
+}
+window.addEventListener("scroll",()=>{ clearTimeout(scrollSaveTimer); scrollSaveTimer=setTimeout(saveScroll,200); },{passive:true});
+window.addEventListener("beforeunload",saveScroll);
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) saveScroll(); });
 function updateNavBadges(){
   const n = overdueProfs().length;
   $$("[data-badge]").forEach(el=>el.textContent = n? String(n):"");
@@ -1246,9 +1364,9 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat],[data-edraft]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat],[data-edraft],[data-oview],[data-savenote],[data-saveunote],[data-star]");
   if(!t) return;
-  if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
+  if(t.dataset.v){ setView(t.dataset.v); render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
   else if(t.dataset.stg){
     const ps=pstate(t.dataset.p); const stg=t.dataset.stg;
@@ -1259,7 +1377,7 @@ document.addEventListener("click",e=>{
     const y=window.scrollY; render(); window.scrollTo(0,y); renderProfModal();
   }
   else if(t.dataset.more){ const el=$("#st-"+t.dataset.more); el.classList.toggle("clip"); t.textContent=el.classList.contains("clip")?"show full":"collapse"; }
-  else if(t.dataset.go){ view=t.dataset.go; if(t.dataset.preset){pFilters.preset=t.dataset.preset;} render(); window.scrollTo(0,0); }
+  else if(t.dataset.go){ setView(t.dataset.go); if(t.dataset.preset){pFilters.preset=t.dataset.preset;} render(); window.scrollTo(0,0); }
   else if(t.dataset.chip){ const c=t.dataset.chip; pFilters.chips.has(c)?pFilters.chips.delete(c):pFilters.chips.add(c); renderPeople(); }
   else if(t.dataset.app){
     const us=ustate(t.dataset.u); us.app = us.app===t.dataset.app?null:t.dataset.app; touch(us);
@@ -1276,6 +1394,10 @@ document.addEventListener("click",e=>{
   else if(t.dataset.econt){ eFilters.cont = eFilters.cont===t.dataset.econt?"":t.dataset.econt; renderEccv(); }
   else if(t.dataset.estat){ eFilters.stat = eFilters.stat===t.dataset.estat?"":t.dataset.estat; renderEccv(); }
   else if(t.dataset.edraft){ eFilters.draft = eFilters.draft===t.dataset.edraft?"":t.dataset.edraft; renderEccv(); }
+  else if(t.dataset.oview){ eFilters.oview = t.dataset.oview; renderEccv(); }
+  else if(t.dataset.savenote){ const ps=pstate(t.dataset.savenote); touch(ps); pushNow(); flashSavedHint(t); toast("Note saved"); }
+  else if(t.dataset.saveunote){ const us=ustate(t.dataset.saveunote); touch(us); pushNow(); flashSavedHint(t); toast("Note saved"); }
+  else if(t.dataset.star){ const ps=pstate(t.dataset.star); ps.star=!ps.star; touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); renderProfModal(); }
   else if(t.dataset.morepapers){ const id=t.dataset.morepapers; eccvPapersOpen.has(id)?eccvPapersOpen.delete(id):eccvPapersOpen.add(id); const y=window.scrollY; if(view==="eccv") renderEccv(); window.scrollTo(0,y); renderProfModal(); }
   else if(t.dataset.pdetail){ openProfModal(t.dataset.pdetail); }
   else if(t.dataset.pmclose){ closeProfModal(); }
@@ -1286,9 +1408,16 @@ document.addEventListener("click",e=>{
       .catch(()=>toast("Copy failed"));
   }
 });
+function flashSavedHint(fromEl){
+  const notelbl = fromEl.classList.contains("noteta") ? fromEl.previousElementSibling : fromEl.closest(".notelbl");
+  const hint = notelbl ? notelbl.querySelector(".savedhint") : null;
+  if(!hint) return;
+  hint.classList.add("show");
+  clearTimeout(hint._t); hint._t = setTimeout(()=>hint.classList.remove("show"), 1400);
+}
 document.addEventListener("input",e=>{
-  if(e.target.dataset.note){ const ps=pstate(e.target.dataset.note); ps.notes=e.target.value; touch(ps); }
-  if(e.target.dataset.unote){ const us=ustate(e.target.dataset.unote); us.notes=e.target.value; touch(us); }
+  if(e.target.dataset.note){ const ps=pstate(e.target.dataset.note); ps.notes=e.target.value; touch(ps); flashSavedHint(e.target); }
+  if(e.target.dataset.unote){ const us=ustate(e.target.dataset.unote); us.notes=e.target.value; touch(us); flashSavedHint(e.target); }
 });
 
 /* ---------- command palette ---------- */
@@ -1340,11 +1469,11 @@ function cmdClose(){ $("#cmdk").classList.remove("open"); }
 function cmdGo(it){
   if(!it) return;
   cmdClose();
-  if(it.t==="view"){ view=it.id; render(); window.scrollTo(0,0); }
+  if(it.t==="view"){ setView(it.id); render(); window.scrollTo(0,0); }
   else if(it.t==="prof"){ openProfModal(it.id); }
   else if(it.t==="dl"){ openProfModal("dl-"+it.id); }
   else if(it.t==="uni"){
-    view="schools"; sFilters={q:"",cont:"",sort:""}; openUnis.add(it.id); render();
+    setView("schools"); sFilters={q:"",cont:"",sort:""}; openUnis.add(it.id); render();
     const el=$("#uc-"+it.id); if(el) el.scrollIntoView({block:"start",behavior:"instant"});
     window.scrollBy(0,-70);
   }
@@ -1374,7 +1503,7 @@ document.addEventListener("keydown",e=>{
   if(typing || e.metaKey || e.ctrlKey || e.altKey) return;
   if(e.key==="/"){ e.preventDefault(); cmdOpen(); return; }
   const n=parseInt(e.key,10);
-  if(n>=1 && n<=VIEWS.length){ view=VIEWS[n-1]; render(); window.scrollTo(0,0); }
+  if(n>=1 && n<=VIEWS.length){ setView(VIEWS[n-1]); render(); window.scrollTo(0,0); }
 });
 
 /* ---------- settings ---------- */
@@ -1413,7 +1542,9 @@ $("#importFile").onchange=e=>{
 $("#wipeBtn").onclick=()=>{ if(confirm("Erase all tracking data on this device? (Remote KV copy is untouched)")){ localStorage.removeItem("phdState"); state={profs:{},unis:{},dates:{},v:1}; render(); toast("Local data cleared"); } };
 
 /* ---------- boot ---------- */
+try{ const savedView=localStorage.getItem("phdView"); if(savedView && VIEWS.includes(savedView)) view=savedView; }catch(e){}
 loadLocal(); render(); setDot("local"); pullMergePush(false);
+restoreScroll(view);
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
