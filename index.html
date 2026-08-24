@@ -1017,8 +1017,11 @@ const KCOLS = [
 ];
 const KNEXT = {null:"emailed",emailed:"replied",replied:"interview",interview:"offer"};
 const KNEXT_LBL = {null:"Emailed",emailed:"Replied",replied:"Interview",interview:"Offer"};
+let kFilters = {q:""};
 function renderPipeline(){
-  const real = D.professors.filter(p=>!p.flags.note);
+  let real = D.professors.filter(p=>!p.flags.note);
+  if(kFilters.q){ const q=kFilters.q.toLowerCase();
+    real = real.filter(p=>(p.name+" "+p.uniName).toLowerCase().includes(q)); }
   const cols = KCOLS.map(([stage,label,color])=>{
     let list = real.filter(p=>pstate(p.id).stage===stage);
     if(stage==="emailed") list.sort((a,b)=>lastPing(pstate(a.id))-lastPing(pstate(b.id)));
@@ -1045,19 +1048,28 @@ function renderPipeline(){
   $("#v-pipeline").innerHTML = `
     <h2>Outreach pipeline</h2>
     <div class="hint" style="margin-bottom:10px">Every professor by stage. Click a card for the full profile; use → to advance a stage (date auto-stamped).</div>
-    <div class="kb">${cols}</div>`;
+    <input class="search" id="ksearch" placeholder="Search professors, schools…" value="${esc(kFilters.q)}">
+    <div class="kb" style="margin-top:12px">${cols}</div>`;
+  const ks=$("#ksearch");
+  ks.addEventListener("input",e=>{kFilters.q=e.target.value; renderPipeline(); const ns=$("#ksearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
 }
 
+let dFilters = {q:""};
 function renderDates(){
-  const up = allDeadlines();
-  $("#v-dates").innerHTML = `<h2>All tracked dates</h2><div class="board">${up.map(d=>{
+  let up = allDeadlines();
+  if(dFilters.q){ const q=dFilters.q.toLowerCase();
+    up = up.filter(d=>(d.label+" "+(d.uni||"")+" "+d.date).toLowerCase().includes(q)); }
+  $("#v-dates").innerHTML = `<h2>All tracked dates</h2>
+  <input class="search" id="dsearch" placeholder="Search dates, universities…" value="${esc(dFilters.q)}">
+  <div class="count">${up.length} dates</div>
+  <div class="board">${up.map(d=>{
     const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
     const t = d.dl<0?`T+${-d.dl}d`:`T−${d.dl}d`;
     return `<div class="brow ${cls}" data-pdetail="dl-${d.dlid}"><span class="tminus">${t}</span>
       <div class="bwhat"><div class="l1">${esc(d.label)}</div>
       <div class="l2">${d.date}${d.uni?" · "+esc(d.uni):""}</div></div>
       ${d.custom?`<button class="delx" data-deldate="${d.id}" aria-label="Delete date">✕</button>`:""}</div>`;
-  }).join("")}</div>
+  }).join("")||'<div class="empty">No matches.</div>'}</div>
   <div class="dform">
     <div class="secline" style="margin-top:0">Add your own date</div>
     <div class="frow"><input type="date" id="ndDate" style="max-width:170px"><input id="ndLabel" placeholder="e.g. TOEFL exam · SOP draft due"></div>
@@ -1065,6 +1077,8 @@ function renderDates(){
   </div>
   <div class="btnrow"><button class="btn" id="icsBtn">Export to calendar (.ics)</button></div>
   <div class="hint" style="margin-top:10px">Dates come from the research audit (Aug 2026). Always reverify on the official page before submitting — programs shift dates between cycles. Your own dates (✕) sync across devices like everything else.</div>`;
+  const ds=$("#dsearch");
+  ds.addEventListener("input",e=>{dFilters.q=e.target.value; renderDates(); const ns=$("#dsearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
   $("#addDate").onclick=()=>{
     const date=$("#ndDate").value, label=$("#ndLabel").value.trim();
     if(!date||!label){ toast("Need a date and a label"); return; }
@@ -1075,6 +1089,8 @@ function renderDates(){
   $("#icsBtn").onclick=exportICS;
 }
 
+let eFilters = {q:"",prio:"",cont:"",stat:""};
+function eccvStatus(id){ const v=pstate(id).eccv; return v==="plan"?"plan":v==="met"?"met":"notcontacted"; }
 function renderEccv(){
   const matches=[]; const mk=new Set();
   D.professors.filter(p=>!p.flags.note).forEach(p=>{
@@ -1094,6 +1110,23 @@ function renderEccv(){
   const nMet=matches.filter(m=>pstate(m.p.id).eccv==="met").length;
   const prio=p=>`<span class="prio ${p||"C"}">${p||"?"}</span>`;
 
+  const q=eFilters.q.toLowerCase();
+  const mList = matches.filter(({p,e})=>{
+    if(eFilters.prio && (e.priority||"C")!==eFilters.prio) return false;
+    if(eFilters.cont && (!uniById[p.uniId]||uniById[p.uniId].continent!==eFilters.cont)) return false;
+    if(eFilters.stat && eccvStatus(p.id)!==eFilters.stat) return false;
+    if(q && !(p.name+" "+p.uniName+" "+(e.overlap||"")+" "+(e.mention||"")).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const oList = others.filter(({e,uni})=>{
+    if(eFilters.prio && (e.priority||"C")!==eFilters.prio) return false;
+    if(eFilters.cont && uni.continent!==eFilters.cont) return false;
+    if(eFilters.stat==="met") return false; // "others" can only be plan/not-contacted (no Met toggle on this list)
+    if(eFilters.stat && eccvStatus("ex-"+nameKey(e.name))!==eFilters.stat) return false;
+    if(q && !(e.name+" "+e.institution).toLowerCase().includes(q)) return false;
+    return true;
+  });
+
   $("#v-eccv").innerHTML = `
     <h2>Your targets at ECCV 2026</h2>
     <div class="progress">
@@ -1103,7 +1136,14 @@ function renderEccv(){
         <span><span class="dotk" style="background:var(--green)"></span>met <b>${nMet}</b></span>
       </div>
     </div>
-    <div class="pgrid">${matches.map(({p,e})=>{
+    <div class="fbar">
+      ${["S","A","B","C"].map(p=>`<button class="fchip${eFilters.prio===p?" on":""}" data-eprio="${p}">${p}</button>`).join("")}
+      ${[["eu","Europe"],["na","N.America"],["asia","Asia"],["aus","Australia"]].map(([k,l])=>`<button class="fchip${eFilters.cont===k?" on":""}" data-econt="${k}">${l}</button>`).join("")}
+      ${[["notcontacted","Not contacted"],["plan","Plan to meet"],["met","Met"]].map(([k,l])=>`<button class="fchip${eFilters.stat===k?" on":""}" data-estat="${k}">${l}</button>`).join("")}
+    </div>
+    <input class="search" id="esearch" placeholder="Search professors, institutions…" value="${esc(eFilters.q)}">
+    <div class="count">${mList.length} of ${matches.length} tracked matches${eFilters.prio||eFilters.cont||eFilters.stat||eFilters.q?" (filtered)":""}</div>
+    <div class="pgrid">${mList.map(({p,e})=>{
       const ps=pstate(p.id);
       const uni=uniById[p.uniId];
       return `<div class="pcard">
@@ -1127,15 +1167,17 @@ function renderEccv(){
           <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
         </div>
       </div>`;
-    }).join("")||'<div class="empty">No overlaps found.</div>'}</div>
+    }).join("")||'<div class="empty">No matches for these filters.</div>'}</div>
 
-    <h2>Also at ECCV from your target schools (${others.length})</h2>
+    <h2>Also at ECCV from your target schools (${oList.length} of ${others.length})</h2>
     <div class="hint" style="margin-bottom:8px">Not on your outreach list, but faculty at schools you're targeting — worth a hello at their poster. Star the ones you want to catch.</div>
-    <div class="board">${others.map(({e,uni})=>{
+    <div class="board">${oList.map(({e,uni})=>{
       const xid="ex-"+nameKey(e.name); const on=pstate(xid).eccv==="plan";
       return `<div class="crow" data-pdetail="${xid}">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span>${contChip(uni)}<button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
-    }).join("")}</div>
+    }).join("")||'<div class="empty">No matches for these filters.</div>'}</div>
     <div class="hint" style="margin-top:10px">${esc(ECCV.note)} Data generated ${esc(ECCV.generated)} from the ECCV navigator audit.</div>`;
+  const es=$("#esearch");
+  es.addEventListener("input",e=>{eFilters.q=e.target.value; renderEccv(); const ns=$("#esearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
 }
 
 /* ---------- render + events ---------- */
@@ -1159,7 +1201,7 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat]");
   if(!t) return;
   if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -1185,6 +1227,9 @@ document.addEventListener("click",e=>{
   else if(t.dataset.doc){ const us=ustate(t.dataset.u); us.docs=us.docs||{}; us.docs[t.dataset.doc]=!us.docs[t.dataset.doc]; touch(us); const y=window.scrollY; render(); window.scrollTo(0,y); }
   else if(t.dataset.compact){ pFilters.compact=!pFilters.compact; renderPeople(); }
   else if(t.dataset.eccv){ const ps=pstate(t.dataset.eccv); ps.eccv = ps.eccv===t.dataset.est?null:t.dataset.est; touch(ps); const y=window.scrollY; render(); window.scrollTo(0,y); renderProfModal(); }
+  else if(t.dataset.eprio){ eFilters.prio = eFilters.prio===t.dataset.eprio?"":t.dataset.eprio; renderEccv(); }
+  else if(t.dataset.econt){ eFilters.cont = eFilters.cont===t.dataset.econt?"":t.dataset.econt; renderEccv(); }
+  else if(t.dataset.estat){ eFilters.stat = eFilters.stat===t.dataset.estat?"":t.dataset.estat; renderEccv(); }
   else if(t.dataset.morepapers){ const id=t.dataset.morepapers; eccvPapersOpen.has(id)?eccvPapersOpen.delete(id):eccvPapersOpen.add(id); const y=window.scrollY; if(view==="eccv") renderEccv(); window.scrollTo(0,y); renderProfModal(); }
   else if(t.dataset.pdetail){ openProfModal(t.dataset.pdetail); }
   else if(t.dataset.pmclose){ closeProfModal(); }

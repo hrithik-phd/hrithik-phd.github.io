@@ -1,5 +1,5 @@
 // PhD Command service worker — network-first for same-origin, cache fallback offline.
-const CACHE = "phd-cmd-v5";
+const CACHE = "phd-cmd-v6";
 const SHELL = ["./", "./index.html", "./data.js", "./eccv.js", "./links.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
