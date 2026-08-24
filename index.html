@@ -217,6 +217,17 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .fchip.on{border-color:var(--amber);color:var(--amber);background:color-mix(in srgb,var(--amber) 10%,transparent)}
 .sortsel{width:auto;flex-shrink:0;padding:6px 10px;border-radius:99px;font-size:12.5px;font-weight:600;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
 .sortsel:hover{border-color:var(--line2)}
+.msel{position:relative;display:inline-flex;flex-shrink:0}
+.mselbtn{display:inline-flex;align-items:center;gap:4px}
+.mselpanel{position:fixed;z-index:60;width:min(280px,80vw);max-height:340px;display:flex;flex-direction:column;background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:8px;box-shadow:var(--shadow-lg)}
+.mselsearch{width:100%;box-sizing:border-box;margin-bottom:6px;padding:6px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:12.5px}
+.msellist{overflow-y:auto;flex:1;min-height:0}
+.mseloption{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:12.5px;color:var(--body);cursor:pointer}
+.mseloption:hover{background:var(--line)}
+.mseloption input{width:auto;padding:0;flex-shrink:0}
+.mselfoot{display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;border-top:1px solid var(--line)}
+.mselfoot button{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 6px}
+.mselfoot button:hover{color:var(--ink)}
 .search{margin-top:6px;padding:10px 12px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}
 .count{font-size:12px;color:var(--dim);font-family:var(--mono);margin:10px 2px}
 
@@ -634,6 +645,49 @@ function labFor(name){ return (LINKS.profs[nameKey(name)]||{}).lab || ""; }
 const CONT_LBL = {eu:"EU",na:"N.AM",asia:"ASIA",aus:"AUS"};
 function contChip(u){ return u&&u.continent?`<span class="contchip ${u.continent}">${CONT_LBL[u.continent]||u.continent}</span>`:""; }
 function uniLoc(u){ return u?[u.city,u.country].filter(Boolean).join(", "):""; }
+
+/* ---------- reusable multi-select institution filter (People/ECCV/Pipeline/Dates) ---------- */
+const MSEL_REGISTRY = {}; // prefix -> {filters, rerender}
+function registerMsel(prefix, filters, rerender){ MSEL_REGISTRY[prefix]=[filters,rerender]; }
+function uniMultiHtml(prefix, filters, uniList){
+  const q = (filters.uniQ||"").toLowerCase();
+  const opts = uniList.filter(u=>!q||u.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+  const n = filters.uni.size;
+  return `<div class="msel">
+    <button class="fchip mselbtn${n?" on":""}" data-mseltoggle="${prefix}">Institutions${n?` (${n})`:""} ▾</button>
+    ${filters.uniOpen?`<div class="mselpanel" data-mselpanel="${prefix}">
+      <input class="mselsearch" data-mselq="${prefix}" placeholder="Search institutions…" value="${esc(filters.uniQ||"")}">
+      <div class="msellist">${opts.map(u=>`<label class="mseloption"><input type="checkbox" data-mseluni="${prefix}:${u.id}"${filters.uni.has(u.id)?" checked":""}><span>${esc(u.name)}</span></label>`).join("")||'<div class="empty" style="padding:8px 4px">No matches.</div>'}</div>
+      <div class="mselfoot"><button data-mselclear="${prefix}">Clear${n?` (${n})`:""}</button><button data-mselcls="${prefix}">Done</button></div>
+    </div>`:""}
+  </div>`;
+}
+function positionMselPanel(prefix){
+  const panel = document.querySelector(`[data-mselpanel="${prefix}"]`);
+  const btn = document.querySelector(`[data-mseltoggle="${prefix}"]`);
+  if(!panel||!btn) return;
+  const r = btn.getBoundingClientRect();
+  const pw = panel.offsetWidth || 280;
+  let left = r.left;
+  if(left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if(left < 8) left = 8;
+  let top = r.bottom + 6;
+  const ph = panel.offsetHeight || 340;
+  if(top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+  panel.style.left = left+"px";
+  panel.style.top = top+"px";
+}
+function wireUniMultiSelect(prefix){
+  positionMselPanel(prefix);
+  const inp = $(`[data-mselq="${prefix}"]`);
+  if(!inp) return;
+  inp.addEventListener("input", e=>{
+    const [filters,rerender] = MSEL_REGISTRY[prefix];
+    filters.uniQ = e.target.value; rerender();
+    const ni = $(`[data-mselq="${prefix}"]`);
+    if(ni){ ni.focus(); ni.setSelectionRange(ni.value.length,ni.value.length); }
+  });
+}
 function draftMail(p, em){
   const uni = uniById[p.uniId]||{};
   const last = p.name.split("/")[0].replace(/\(.*?\)|\[.*?\]/g," ").replace(/[^\w\s.-]/g,"").trim().split(/\s+/).pop() || p.name;
@@ -1005,7 +1059,7 @@ function renderSchools(){
   s.addEventListener("input",e=>{sFilters.q=e.target.value; renderSchools(); const ns=$("#ssearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
 }
 
-let pFilters = {q:"",preset:"",chips:new Set(),compact:false,sort:""};
+let pFilters = {q:"",preset:"",chips:new Set(),compact:false,sort:"",uni:new Set(),uniOpen:false,uniQ:"",stage:"",cluster:"",starOnly:false};
 const CHIPS = [["recruiting","Recruiting"],["visiting","Visiting route"],["doNotEmail","Do-not-email"],["form","Form"],["directEmail","Direct email"],["warning","⚠ Caution"],["na","N.America"],["eu","Europe"],["asia","Asia"],["aus","Australia"]];
 const PEOPLE_SORTS = [
   ["","School priority (default)"],
@@ -1025,14 +1079,29 @@ function sortProfs(list, sort){
   else if(sort==="activity"){ const act=p=>(state.profs[p.id]||{}).ts||0; arr.sort((a,b)=>act(b)-act(a)); }
   return arr;
 }
+const CLUSTER_CHIPS = [["has","🔗 Has cluster"],["primary","🔗 Email first"],["wait","🔗 Wait"]];
+function clusterMatch(p, mode){
+  const c = clusterFor(p);
+  if(!c) return false;
+  if(mode==="has") return true;
+  const isPrimary = nameKey(c.primary)===nameKey(p.name);
+  return mode==="primary" ? isPrimary : !isPrimary;
+}
 function renderPeople(){
+  registerMsel("p", pFilters, renderPeople);
   const chipHtml = CHIPS.map(([k,l])=>`<button class="fchip${pFilters.chips.has(k)?" on":""}" data-chip="${k}">${l}</button>`).join("");
+  const stageChipHtml = KCOLS.map(([stage,label])=>`<button class="fchip${pFilters.stage===(stage||"none")?" on":""}" data-pstage="${stage||"none"}">${label}</button>`).join("");
+  const clusterChipHtml = CLUSTER_CHIPS.map(([k,l])=>`<button class="fchip${pFilters.cluster===k?" on":""}" data-pcluster="${k}">${l}</button>`).join("");
   let list = D.professors.filter(p=>!p.flags.note);
   for(const c of pFilters.chips){
     if(["na","eu","asia","aus"].includes(c)) list=list.filter(p=>uniById[p.uniId]&&uniById[p.uniId].continent===c);
     else if(c==="directEmail") list=list.filter(p=>appMethod(p)==="email");
     else list=list.filter(p=>p.flags[c]);
   }
+  if(pFilters.uni.size) list=list.filter(p=>pFilters.uni.has(p.uniId));
+  if(pFilters.stage) list=list.filter(p=>(pstate(p.id).stage||"none")===pFilters.stage);
+  if(pFilters.cluster) list=list.filter(p=>clusterMatch(p, pFilters.cluster));
+  if(pFilters.starOnly) list=list.filter(p=>pstate(p.id).star);
   if(pFilters.preset==="awaiting") list=list.filter(p=>pstate(p.id).stage==="emailed");
   if(pFilters.preset==="overdue") list=list.filter(p=>{const s=pstate(p.id);return s.stage==="emailed"&&lastPing(s)&&daysAgo(lastPing(s))>=14;});
   if(pFilters.preset==="replied") list=list.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
@@ -1047,18 +1116,24 @@ function renderPeople(){
         return `<button class="crow" data-pdetail="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cu">${esc(p.uniName)}${u&&u.city?` · ${esc(u.city)}`:""}</span>${contChip(u)}<span class="cs">${s||"—"}</span></button>`;
       }).join("")+`</div>`
     : `<div class="pgrid">`+list.map(p=>profCard(p,true)).join("")+`</div>`;
+  const anyFilter = pFilters.chips.size||pFilters.uni.size||pFilters.stage||pFilters.cluster||pFilters.starOnly||pFilters.preset||pFilters.q;
   $("#v-people").innerHTML = `
     <div class="fbar"><button class="fchip${pFilters.compact?" on":""}" data-compact="1">≡ Compact</button>
       <select class="sortsel" id="psort" aria-label="Sort professors">${PEOPLE_SORTS.map(([k,l])=>`<option value="${k}"${pFilters.sort===k?" selected":""}>Sort: ${l}</option>`).join("")}</select>
+      ${uniMultiHtml("p", pFilters, D.universities)}
+      <button class="fchip${pFilters.starOnly?" on":""}" data-pstaronly="1">★ Starred only</button>
       ${chipHtml}</div>
+    <div class="fbar" style="padding-top:0">${stageChipHtml}</div>
+    <div class="fbar" style="padding-top:0">${clusterChipHtml}</div>
     <input class="search" id="psearch" placeholder="Search names, statements, methods… e.g. 'grounding' or 'Dec 15'" value="${esc(pFilters.q)}">
     ${pFilters.preset?`<div class="count">preset: ${pFilters.preset} — <button class="more" id="clearPreset">clear</button></div>`:""}
-    <div class="count">${list.length} professors</div>
+    <div class="count">${list.length} professors${anyFilter?" (filtered)":""}</div>
     ${list.length?listHtml:'<div class="empty">No matches.</div>'}`;
   $("#psort").addEventListener("change",e=>{pFilters.sort=e.target.value; renderPeople();});
   const s=$("#psearch");
   s.addEventListener("input",e=>{pFilters.q=e.target.value; renderPeople(); const ns=$("#psearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
   const cp=$("#clearPreset"); if(cp) cp.onclick=()=>{pFilters.preset="";renderPeople();};
+  wireUniMultiSelect("p");
 }
 
 /* ---------- pipeline (kanban) ---------- */
@@ -1072,9 +1147,13 @@ const KCOLS = [
 ];
 const KNEXT = {null:"emailed",emailed:"replied",replied:"interview",interview:"offer"};
 const KNEXT_LBL = {null:"Emailed",emailed:"Replied",replied:"Interview",interview:"Offer"};
-let kFilters = {q:""};
+let kFilters = {q:"",uni:new Set(),uniOpen:false,uniQ:"",cont:"",starOnly:false};
 function renderPipeline(){
+  registerMsel("k", kFilters, renderPipeline);
   let real = D.professors.filter(p=>!p.flags.note);
+  if(kFilters.uni.size) real=real.filter(p=>kFilters.uni.has(p.uniId));
+  if(kFilters.cont) real=real.filter(p=>uniById[p.uniId]&&uniById[p.uniId].continent===kFilters.cont);
+  if(kFilters.starOnly) real=real.filter(p=>pstate(p.id).star);
   if(kFilters.q){ const q=kFilters.q.toLowerCase();
     real = real.filter(p=>(p.name+" "+p.uniName).toLowerCase().includes(q)); }
   const cols = KCOLS.map(([stage,label,color])=>{
@@ -1112,18 +1191,27 @@ function renderPipeline(){
   $("#v-pipeline").innerHTML = `
     <h2>Outreach pipeline</h2>
     <div class="hint" style="margin-bottom:10px">Every professor by stage, sorted ★ starred first, then ECCV S→A→B→C priority, then school rank. Click a card for the full profile; ☆ to star; use → to advance a stage (date auto-stamped).</div>
+    <div class="fbar">
+      ${uniMultiHtml("k", kFilters, D.universities)}
+      <button class="fchip${kFilters.starOnly?" on":""}" data-kstaronly="1">★ Starred only</button>
+      ${[["eu","Europe"],["na","N.America"],["asia","Asia"],["aus","Australia"]].map(([k,l])=>`<button class="fchip${kFilters.cont===k?" on":""}" data-kcont="${k}">${l}</button>`).join("")}
+    </div>
     <input class="search" id="ksearch" placeholder="Search professors, schools…" value="${esc(kFilters.q)}">
     <div class="kb" style="margin-top:12px">${cols}</div>`;
   const ks=$("#ksearch");
   ks.addEventListener("input",e=>{kFilters.q=e.target.value; renderPipeline(); const ns=$("#ksearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
+  wireUniMultiSelect("k");
 }
 
-let dFilters = {q:""};
+let dFilters = {q:"",uni:new Set(),uniOpen:false,uniQ:""};
 function renderDates(){
+  registerMsel("d", dFilters, renderDates);
   let up = allDeadlines();
+  if(dFilters.uni.size) up=up.filter(d=>{ const u=findUni(d.uni); return u&&dFilters.uni.has(u.id); });
   if(dFilters.q){ const q=dFilters.q.toLowerCase();
     up = up.filter(d=>(d.label+" "+(d.uni||"")+" "+d.date).toLowerCase().includes(q)); }
   $("#v-dates").innerHTML = `<h2>All tracked dates</h2>
+  <div class="fbar">${uniMultiHtml("d", dFilters, D.universities)}</div>
   <input class="search" id="dsearch" placeholder="Search dates, universities…" value="${esc(dFilters.q)}">
   <div class="count">${up.length} dates</div>
   <div class="board">${up.map(d=>{
@@ -1151,9 +1239,10 @@ function renderDates(){
     touch(state.dates[id]); renderDates(); toast("Date added");
   };
   $("#icsBtn").onclick=exportICS;
+  wireUniMultiSelect("d");
 }
 
-let eFilters = {q:"",prio:"",cont:"",stat:"",draft:"",oview:"compact"};
+let eFilters = {q:"",prio:"",cont:"",stat:"",draft:"",oview:"compact",uni:new Set(),uniOpen:false,uniQ:"",cluster:"",starOnly:false};
 function eccvStatus(id){ const v=pstate(id).eccv; return v==="plan"?"plan":v==="met"?"met":"notcontacted"; }
 /* drafted outreach email/guidance for one professor, from emails.js — cross-referencing their
    own profile page + recent ECCV papers with Hrithik's profile.md (M3Grounder/DoCoG/Patram).
@@ -1199,6 +1288,7 @@ function draftBlockHtml(p){
     </div>`;
 }
 function renderEccv(){
+  registerMsel("e", eFilters, renderEccv);
   const matches=[]; const mk=new Set();
   D.professors.filter(p=>!p.flags.note).forEach(p=>{
     const e=eccvByKey[nameKey(p.name)];
@@ -1221,16 +1311,22 @@ function renderEccv(){
   const mList = matches.filter(({p,e})=>{
     if(eFilters.prio && (e.priority||"C")!==eFilters.prio) return false;
     if(eFilters.cont && (!uniById[p.uniId]||uniById[p.uniId].continent!==eFilters.cont)) return false;
+    if(eFilters.uni.size && !eFilters.uni.has(p.uniId)) return false;
     if(eFilters.stat && eccvStatus(p.id)!==eFilters.stat) return false;
     if(eFilters.draft && draftKind(p)!==eFilters.draft) return false;
+    if(eFilters.cluster && !clusterMatch(p, eFilters.cluster)) return false;
+    if(eFilters.starOnly && !pstate(p.id).star) return false;
     if(q && !(p.name+" "+p.uniName+" "+(e.overlap||"")+" "+(e.mention||"")).toLowerCase().includes(q)) return false;
     return true;
   });
   const oList = others.filter(({e,uni})=>{
     if(eFilters.prio && (e.priority||"C")!==eFilters.prio) return false;
     if(eFilters.cont && uni.continent!==eFilters.cont) return false;
+    if(eFilters.uni.size && !eFilters.uni.has(uni.id)) return false;
     if(eFilters.stat==="met") return false; // "others" can only be plan/not-contacted (no Met toggle on this list)
     if(eFilters.stat && eccvStatus("ex-"+nameKey(e.name))!==eFilters.stat) return false;
+    if(eFilters.cluster) return false; // cluster data only exists for tracked professors
+    if(eFilters.starOnly) return false; // star toggle only exists for tracked professors
     if(q && !(e.name+" "+e.institution).toLowerCase().includes(q)) return false;
     return true;
   });
@@ -1245,13 +1341,20 @@ function renderEccv(){
       </div>
     </div>
     <div class="fbar">
+      ${uniMultiHtml("e", eFilters, D.universities)}
+      <button class="fchip${eFilters.starOnly?" on":""}" data-estaronly="1">★ Starred only</button>
       ${["S","A","B","C"].map(p=>`<button class="fchip${eFilters.prio===p?" on":""}" data-eprio="${p}">${p}</button>`).join("")}
       ${[["eu","Europe"],["na","N.America"],["asia","Asia"],["aus","Australia"]].map(([k,l])=>`<button class="fchip${eFilters.cont===k?" on":""}" data-econt="${k}">${l}</button>`).join("")}
+    </div>
+    <div class="fbar" style="padding-top:0">
       ${[["notcontacted","Not contacted"],["plan","Plan to meet"],["met","Met"]].map(([k,l])=>`<button class="fchip${eFilters.stat===k?" on":""}" data-estat="${k}">${l}</button>`).join("")}
       ${[["email","Draft ready"],["guidance","Guidance only"],["none","No draft"]].map(([k,l])=>`<button class="fchip${eFilters.draft===k?" on":""}" data-edraft="${k}">${l}</button>`).join("")}
     </div>
+    <div class="fbar" style="padding-top:0">
+      ${CLUSTER_CHIPS.map(([k,l])=>`<button class="fchip${eFilters.cluster===k?" on":""}" data-ecluster="${k}">${l}</button>`).join("")}
+    </div>
     <input class="search" id="esearch" placeholder="Search professors, institutions…" value="${esc(eFilters.q)}">
-    <div class="count">${mList.length} of ${matches.length} tracked matches${eFilters.prio||eFilters.cont||eFilters.stat||eFilters.draft||eFilters.q?" (filtered)":""}</div>
+    <div class="count">${mList.length} of ${matches.length} tracked matches${eFilters.prio||eFilters.cont||eFilters.uni.size||eFilters.stat||eFilters.draft||eFilters.cluster||eFilters.starOnly||eFilters.q?" (filtered)":""}</div>
     <div class="pgrid">${mList.map(({p,e})=>{
       const ps=pstate(p.id);
       const uni=uniById[p.uniId];
@@ -1311,6 +1414,7 @@ function renderEccv(){
     <div class="hint" style="margin-top:10px">${esc(ECCV.note)} Data generated ${esc(ECCV.generated)} from the ECCV navigator audit.</div>`;
   const es=$("#esearch");
   es.addEventListener("input",e=>{eFilters.q=e.target.value; renderEccv(); const ns=$("#esearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
+  wireUniMultiSelect("e");
 }
 
 /* ---------- render + events ---------- */
@@ -1364,7 +1468,17 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat],[data-edraft],[data-oview],[data-savenote],[data-saveunote],[data-star]");
+  if(!e.target.closest(".msel")){
+    let closedAny=false;
+    [pFilters,eFilters,kFilters,dFilters].forEach(f=>{ if(f.uniOpen){ f.uniOpen=false; closedAny=true; } });
+    if(closedAny){
+      if(view==="people") renderPeople();
+      else if(view==="eccv") renderEccv();
+      else if(view==="pipeline") renderPipeline();
+      else if(view==="dates") renderDates();
+    }
+  }
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat],[data-edraft],[data-oview],[data-savenote],[data-saveunote],[data-star],[data-mseltoggle],[data-mseluni],[data-mselclear],[data-mselcls],[data-pstage],[data-pcluster],[data-pstaronly],[data-ecluster],[data-estaronly],[data-kcont],[data-kstaronly]");
   if(!t) return;
   if(t.dataset.v){ setView(t.dataset.v); render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -1407,6 +1521,35 @@ document.addEventListener("click",e=>{
       .then(()=>toast("Copied: "+t.dataset.copy))
       .catch(()=>toast("Copy failed"));
   }
+  else if(t.dataset.mseltoggle){
+    const prefix = t.dataset.mseltoggle;
+    const [filters,rerender] = MSEL_REGISTRY[prefix];
+    const opening = !filters.uniOpen;
+    [pFilters,eFilters,kFilters,dFilters].forEach(f=>f.uniOpen=false);
+    filters.uniOpen = opening;
+    rerender();
+  }
+  else if(t.dataset.mseluni){
+    const [prefix,uniId] = t.dataset.mseluni.split(":");
+    const [filters,rerender] = MSEL_REGISTRY[prefix];
+    filters.uni.has(uniId) ? filters.uni.delete(uniId) : filters.uni.add(uniId);
+    rerender();
+  }
+  else if(t.dataset.mselclear){
+    const [filters,rerender] = MSEL_REGISTRY[t.dataset.mselclear];
+    filters.uni.clear(); rerender();
+  }
+  else if(t.dataset.mselcls){
+    const [filters,rerender] = MSEL_REGISTRY[t.dataset.mselcls];
+    filters.uniOpen=false; rerender();
+  }
+  else if(t.dataset.pstage){ pFilters.stage = pFilters.stage===t.dataset.pstage?"":t.dataset.pstage; renderPeople(); }
+  else if(t.dataset.pcluster){ pFilters.cluster = pFilters.cluster===t.dataset.pcluster?"":t.dataset.pcluster; renderPeople(); }
+  else if(t.dataset.pstaronly){ pFilters.starOnly = !pFilters.starOnly; renderPeople(); }
+  else if(t.dataset.ecluster){ eFilters.cluster = eFilters.cluster===t.dataset.ecluster?"":t.dataset.ecluster; renderEccv(); }
+  else if(t.dataset.estaronly){ eFilters.starOnly = !eFilters.starOnly; renderEccv(); }
+  else if(t.dataset.kcont){ kFilters.cont = kFilters.cont===t.dataset.kcont?"":t.dataset.kcont; renderPipeline(); }
+  else if(t.dataset.kstaronly){ kFilters.starOnly = !kFilters.starOnly; renderPipeline(); }
 });
 function flashSavedHint(fromEl){
   const notelbl = fromEl.classList.contains("noteta") ? fromEl.previousElementSibling : fromEl.closest(".notelbl");
