@@ -321,6 +321,19 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 .epaper a{color:inherit;text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--blue) 45%,transparent)}
 .epaper a:hover{color:var(--blue)}
 
+/* ---------- drafted outreach emails ---------- */
+.edraft{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.edraft.guidance{border-left:3px solid var(--amber)}
+.edraft.email{border-left:3px solid var(--blue)}
+.ekind{font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:.08em;padding:2px 8px;border-radius:5px;display:inline-block}
+.ekind.email{color:var(--blue);background:color-mix(in srgb,var(--blue) 13%,transparent)}
+.ekind.guidance{color:var(--amber);background:color-mix(in srgb,var(--amber) 13%,transparent)}
+.ehook{font-size:12.5px;color:var(--muted);margin:8px 0;line-height:1.5}
+.esubj{font-size:13.5px;font-weight:700;margin-top:8px}
+.ebody{font-size:13px;color:var(--body);white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:6px;line-height:1.55}
+.enote{font-size:13px;color:var(--body);background:var(--surface2);border-radius:8px;padding:10px 12px;margin-top:8px;line-height:1.55}
+.eacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
 /* hover polish */
 .ucard:hover,.stat:hover,.pgrid>.pcard:hover{border-color:var(--line2)}
 .stat:active{transform:scale(.98)}
@@ -445,6 +458,7 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 <script src="data.js"></script>
 <script src="eccv.js"></script>
 <script src="links.js"></script>
+<script src="emails.js"></script>
 <script>
 "use strict";
 const D = window.PHD_DATA;
@@ -555,6 +569,7 @@ function nameKey(n){
     .split(/\s+/).filter(w=>w.length>1).join("");
 }
 const LINKS = window.PHD_LINKS || {profs:{},papers:{}};
+const EMAILS = (window.PHD_EMAILS||{profs:{}}).profs;
 const ECCV = window.ECCV_DATA || {professors:[],papers:{},generated:"",note:""};
 const eccvByKey = {}; ECCV.professors.forEach(e=>eccvByKey[nameKey(e.name)]=e);
 const ECCV_RANK = {S:4,A:3,B:2,C:1};
@@ -736,6 +751,7 @@ function profDetailHtml(pid){
       ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
       ${e.action?`<div class="stmt" style="color:var(--muted)">${esc(e.action)}</div>`:""}
       ${papersHtml(e,p.id)}
+      ${draftBlockHtml(p)}
       <div class="appchips" style="margin-top:9px">
         <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
         <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
@@ -1089,8 +1105,34 @@ function renderDates(){
   $("#icsBtn").onclick=exportICS;
 }
 
-let eFilters = {q:"",prio:"",cont:"",stat:""};
+let eFilters = {q:"",prio:"",cont:"",stat:"",draft:""};
 function eccvStatus(id){ const v=pstate(id).eccv; return v==="plan"?"plan":v==="met"?"met":"notcontacted"; }
+/* drafted outreach email/guidance for one professor, from emails.js — cross-referencing their
+   own profile page + recent ECCV papers with Hrithik's profile.md (M3Grounder/DoCoG/Patram).
+   Rendered inline on every card for that professor (ECCV grid + the profile-detail modal). */
+function draftKind(p){ const d=EMAILS[p.id]; return d?d.kind:"none"; }
+function draftBlockHtml(p){
+  const d = EMAILS[p.id];
+  if(!d) return "";
+  const em = d.email || (p.contact||"").match(/[\w.+-]+@[\w.-]+\.\w+/)?.[0];
+  const mailHref = em ? `mailto:${em}?subject=${encodeURIComponent(d.subject||"")}&body=${encodeURIComponent(d.body||"")}` : "";
+  return `<div class="edraft ${d.kind}">
+      <div class="badges"><span class="ekind ${d.kind}">${d.kind==="email"?"EMAIL DRAFT":"GUIDANCE"}</span></div>
+      ${d.hook?`<div class="ehook">${esc(d.hook)}</div>`:""}
+      ${d.kind==="email" ? `
+        <div class="esubj">To: ${esc(em||"(no address found — copy the text below and send manually)")}</div>
+        <div class="esubj">Subject: ${esc(d.subject)}</div>
+        <div class="ebody">${esc(d.body)}</div>
+        <div class="eacts">
+          <button class="copybtn more" data-copy="${esc(d.subject)}">⧉ copy subject</button>
+          <button class="copybtn more" data-copy="${esc(d.body)}">⧉ copy body</button>
+          ${mailHref?`<a class="copybtn more" href="${mailHref}">✉ open in mail app</a>`:""}
+        </div>` : `
+        <div class="secline" style="margin-top:10px">What to do instead</div>
+        <div class="enote">${esc(d.note)}</div>`}
+      ${d.sources&&d.sources.length?`<div class="src" style="margin-top:8px">Checked ${esc(d.checked||"")}: ${d.sources.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//,"").replace(/\/$/,""))}</a>`).join(" · ")}</div>`:""}
+    </div>`;
+}
 function renderEccv(){
   const matches=[]; const mk=new Set();
   D.professors.filter(p=>!p.flags.note).forEach(p=>{
@@ -1115,6 +1157,7 @@ function renderEccv(){
     if(eFilters.prio && (e.priority||"C")!==eFilters.prio) return false;
     if(eFilters.cont && (!uniById[p.uniId]||uniById[p.uniId].continent!==eFilters.cont)) return false;
     if(eFilters.stat && eccvStatus(p.id)!==eFilters.stat) return false;
+    if(eFilters.draft && draftKind(p)!==eFilters.draft) return false;
     if(q && !(p.name+" "+p.uniName+" "+(e.overlap||"")+" "+(e.mention||"")).toLowerCase().includes(q)) return false;
     return true;
   });
@@ -1140,9 +1183,10 @@ function renderEccv(){
       ${["S","A","B","C"].map(p=>`<button class="fchip${eFilters.prio===p?" on":""}" data-eprio="${p}">${p}</button>`).join("")}
       ${[["eu","Europe"],["na","N.America"],["asia","Asia"],["aus","Australia"]].map(([k,l])=>`<button class="fchip${eFilters.cont===k?" on":""}" data-econt="${k}">${l}</button>`).join("")}
       ${[["notcontacted","Not contacted"],["plan","Plan to meet"],["met","Met"]].map(([k,l])=>`<button class="fchip${eFilters.stat===k?" on":""}" data-estat="${k}">${l}</button>`).join("")}
+      ${[["email","Draft ready"],["guidance","Guidance only"],["none","No draft"]].map(([k,l])=>`<button class="fchip${eFilters.draft===k?" on":""}" data-edraft="${k}">${l}</button>`).join("")}
     </div>
     <input class="search" id="esearch" placeholder="Search professors, institutions…" value="${esc(eFilters.q)}">
-    <div class="count">${mList.length} of ${matches.length} tracked matches${eFilters.prio||eFilters.cont||eFilters.stat||eFilters.q?" (filtered)":""}</div>
+    <div class="count">${mList.length} of ${matches.length} tracked matches${eFilters.prio||eFilters.cont||eFilters.stat||eFilters.draft||eFilters.q?" (filtered)":""}</div>
     <div class="pgrid">${mList.map(({p,e})=>{
       const ps=pstate(p.id);
       const uni=uniById[p.uniId];
@@ -1162,6 +1206,7 @@ function renderEccv(){
         ${p.contact?`<div class="contact"><b>In their own words — how to reach</b>${fmtStmt(p.contact)}</div>`:""}
         ${p.statement?`<div class="contact"><b>In their own words — what they're looking for</b>${fmtStmt(p.statement)}</div>`:""}
         ${papersHtml(e,p.id)}
+        ${draftBlockHtml(p)}
         <div class="appchips" style="margin-top:9px">
           <button class="appc${ps.eccv==="plan"?" on":""}" data-eccv="${p.id}" data-est="plan">Plan to meet</button>
           <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
@@ -1201,7 +1246,7 @@ function render(){
 }
 
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat]");
+  const t = e.target.closest("[data-v],[data-uni],[data-stg],[data-more],[data-go],[data-chip],[data-app],[data-cont],[data-sx],[data-deldate],[data-copy],[data-fu],[data-doc],[data-compact],[data-pdetail],[data-pmclose],[data-sort],[data-eccv],[data-morepapers],[data-eprio],[data-econt],[data-estat],[data-edraft]");
   if(!t) return;
   if(t.dataset.v){ view=t.dataset.v; render(); window.scrollTo(0,0); }
   else if(t.dataset.uni){ const id=t.dataset.uni; openUnis.has(id)?openUnis.delete(id):openUnis.add(id); $("#uc-"+id).classList.toggle("open"); }
@@ -1230,6 +1275,7 @@ document.addEventListener("click",e=>{
   else if(t.dataset.eprio){ eFilters.prio = eFilters.prio===t.dataset.eprio?"":t.dataset.eprio; renderEccv(); }
   else if(t.dataset.econt){ eFilters.cont = eFilters.cont===t.dataset.econt?"":t.dataset.econt; renderEccv(); }
   else if(t.dataset.estat){ eFilters.stat = eFilters.stat===t.dataset.estat?"":t.dataset.estat; renderEccv(); }
+  else if(t.dataset.edraft){ eFilters.draft = eFilters.draft===t.dataset.edraft?"":t.dataset.edraft; renderEccv(); }
   else if(t.dataset.morepapers){ const id=t.dataset.morepapers; eccvPapersOpen.has(id)?eccvPapersOpen.delete(id):eccvPapersOpen.add(id); const y=window.scrollY; if(view==="eccv") renderEccv(); window.scrollTo(0,y); renderProfModal(); }
   else if(t.dataset.pdetail){ openProfModal(t.dataset.pdetail); }
   else if(t.dataset.pmclose){ closeProfModal(); }
