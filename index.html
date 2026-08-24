@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#12151a">
+<meta name="theme-color" content="#0f1216" id="metaTheme">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,223 +15,403 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#12151a; --surface:#1a1f26; --surface2:#232a33; --line:#2c3540;
-  --ink:#e9e4d8; --muted:#8e97a3; --dim:#5c6570;
-  --amber:#e3a94f; --red:#d9695a; --green:#79bd8f; --teal:#63b3a1; --blue:#6da3d8;
-  --eu:#d9c25f; --na:#6da3d8; --asia:#63b3a1; --aus:#e0977a;
-  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  --bg:#0f1216; --surface:#171c23; --surface2:#202834; --line:#2a3340; --line2:#3a4655;
+  --ink:#e9e6de; --body:#c9cfd6; --muted:#949eab; --dim:#5f6873;
+  --amber:#e8b563; --red:#e0796a; --green:#7fc99a; --teal:#6cc0ac; --blue:#7bafe3;
+  --eu:#dcc76a; --na:#7bafe3; --asia:#6cc0ac; --aus:#e39b7e;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -18px rgba(0,0,0,.55);
+  --shadow-lg:0 24px 60px -24px rgba(0,0,0,.65);
+  --r:12px;
+}
+html[data-theme="light"]{
+  --bg:#f2f0e9; --surface:#fdfcf9; --surface2:#f0ede4; --line:#dfdacc; --line2:#c9c3b3;
+  --ink:#20252c; --body:#39414b; --muted:#5e6a76; --dim:#9aa2ac;
+  --amber:#a2711a; --red:#bf4b3c; --green:#25824f; --teal:#1e8672; --blue:#2c67ab;
+  --eu:#95790f; --na:#2c67ab; --asia:#1e8672; --aus:#b25a32;
+  --shadow:0 1px 2px rgba(60,50,20,.06),0 10px 30px -18px rgba(60,50,20,.18);
+  --shadow-lg:0 24px 60px -24px rgba(60,50,20,.3);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;padding-bottom:70px}
-button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
-textarea,input,select{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
-textarea:focus,input:focus,select:focus,button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+textarea,input,select{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--amber);outline-offset:1px;border-color:transparent}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
 a{color:var(--blue)}
-.wrap{max-width:780px;margin:0 auto;padding:0 12px}
+svg.ic{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+::selection{background:color-mix(in srgb,var(--amber) 30%,transparent)}
 
-/* header */
-header{position:sticky;top:0;z-index:40;background:rgba(18,21,26,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
-.hbar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;max-width:780px;margin:0 auto}
-.brand{font-weight:700;letter-spacing:.4px;font-size:15px}
+/* ---------- app shell ---------- */
+.app{display:flex;min-height:100vh}
+.side{display:none}
+.content{flex:1;min-width:0}
+.wrap{max-width:1060px;margin:0 auto;padding:4px 14px 90px}
+
+@media(min-width:960px){
+  .side{display:flex;flex-direction:column;gap:4px;width:230px;flex-shrink:0;position:sticky;top:0;height:100vh;
+    padding:18px 12px 16px;background:var(--surface);border-right:1px solid var(--line)}
+  .wrap{padding:22px 28px 60px}
+}
+.brand{font-weight:700;letter-spacing:.4px;font-size:16px;padding:0 10px 14px}
 .brand span{color:var(--amber)}
-.syncdot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;background:var(--dim)}
-.syncdot.ok{background:var(--green)} .syncdot.local{background:var(--amber)} .syncdot.err{background:var(--red)}
-.gear{font-size:18px;padding:4px 8px;color:var(--muted)}
-nav{display:flex;max-width:780px;margin:0 auto}
-nav button{flex:1;padding:9px 4px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;letter-spacing:.3px}
-nav button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.snav{display:flex;flex-direction:column;gap:2px}
+.navbtn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--muted);text-align:left;width:100%;transition:background .12s,color .12s}
+.navbtn:hover{background:var(--surface2);color:var(--ink)}
+.navbtn.on{background:color-mix(in srgb,var(--amber) 12%,transparent);color:var(--ink)}
+.navbtn.on svg.ic{color:var(--amber)}
+.navbadge{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--red);
+  border:1px solid color-mix(in srgb,var(--red) 55%,transparent);border-radius:99px;padding:0 6px;line-height:16px}
+.navbadge:empty{display:none}
+.sfoot{margin-top:auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:10px}
+.sideact{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:12.5px;font-weight:500;color:var(--muted);width:100%;text-align:left}
+.sideact:hover{background:var(--surface2);color:var(--ink)}
+.sideact .kbd{margin-left:auto}
+.kbd{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:1px 5px;background:var(--bg)}
 
-/* dashboard */
-h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
-.board{border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.brow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+/* mobile header + bottom nav */
+.mhead{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.mhead .hbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+.hacts{display:flex;align-items:center;gap:2px}
+.iconbtn{padding:7px;border-radius:8px;color:var(--muted);display:inline-flex}
+.iconbtn:hover{background:var(--surface2);color:var(--ink)}
+.syncdot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--dim);flex-shrink:0}
+.syncdot.ok{background:var(--green)} .syncdot.local{background:var(--amber)} .syncdot.err{background:var(--red)}
+.mhead .syncdot{margin-right:8px}
+.bottombar{position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;
+  background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:4px 2px calc(4px + env(safe-area-inset-bottom))}
+.bottombar .navbtn{flex-direction:column;gap:3px;padding:6px 2px;font-size:9.5px;font-weight:600;border-radius:8px;flex:1;align-items:center;letter-spacing:.02em}
+.bottombar .navbtn.on{background:none;color:var(--amber)}
+.bottombar .navbadge{display:none}
+.bottombar .navbtn.hasbadge{position:relative}
+.bottombar .navbtn.hasbadge::after{content:"";position:absolute;top:4px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--red)}
+@media(min-width:960px){.bottombar,.mhead{display:none}}
+
+/* ---------- shared blocks ---------- */
+h2{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:24px 0 10px;display:flex;align-items:center;gap:8px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+.board{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.brow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)}
 .brow:last-child{border-bottom:none}
-.brow.warn{background:#26211a}
-.brow.hot{background:#2b1d1a}
+.brow.warn{background:color-mix(in srgb,var(--amber) 7%,transparent)}
+.brow.hot{background:color-mix(in srgb,var(--red) 8%,transparent)}
 .tminus{font-family:var(--mono);font-size:13px;font-weight:600;min-width:56px;color:var(--green)}
 .brow.warn .tminus{color:var(--amber)} .brow.hot .tminus{color:var(--red)}
 .bwhat{flex:1;min-width:0}
-.bwhat .l1{font-size:14px;font-weight:600;line-height:1.3}
+.bwhat .l1{font-size:14px;font-weight:600;line-height:1.35}
 .bwhat .l2{font-size:12px;color:var(--muted);font-family:var(--mono)}
-.past{opacity:.45;text-decoration:line-through}
-.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer}
-.stat .n{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1}
-.stat .t{font-size:12px;color:var(--muted);margin-top:4px}
+.past{opacity:.42;text-decoration:line-through}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:640px){.statgrid{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;text-align:left;box-shadow:var(--shadow);transition:border-color .15s,transform .1s}
+.stat .n{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1}
+.stat .t{font-size:12px;color:var(--muted);margin-top:6px}
 .stat.amber .n{color:var(--amber)} .stat.red .n{color:var(--red)} .stat.green .n{color:var(--green)} .stat.blue .n{color:var(--blue)}
-.mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px 12px}
-.mini .row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:4px 12px;box-shadow:var(--shadow)}
+.mini .row{display:flex;justify-content:space-between;gap:8px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;align-items:center;cursor:pointer;transition:background .12s}
 .mini .row:last-child{border-bottom:none}
+.mini .row:hover{background:var(--surface2)}
 .mini .who{font-weight:600}
 .mini .sub{color:var(--muted);font-size:12px}
 .mini .ago{font-family:var(--mono);font-size:12px;color:var(--amber);white-space:nowrap}
-.empty{color:var(--dim);font-size:13px;padding:14px;text-align:center}
+.empty{color:var(--dim);font-size:13px;padding:16px;text-align:center}
 
-/* uni cards */
-.ucard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:10px;margin-bottom:10px;overflow:hidden}
+/* today layout */
+.tgrid{display:grid;gap:0 24px}
+@media(min-width:900px){
+  .tgrid{grid-template-columns:1.15fr .85fr;align-items:start}
+  .tgrid>div>h2:first-child{margin-top:24px}
+}
+
+/* ---------- uni cards ---------- */
+.ucard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .15s}
 .ucard.eu{border-left-color:var(--eu)} .ucard.na{border-left-color:var(--na)}
 .ucard.asia{border-left-color:var(--asia)} .ucard.aus{border-left-color:var(--aus)}
-.uhead{display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left}
+.uhead{display:flex;align-items:center;gap:10px;padding:13px 14px;width:100%;text-align:left}
 .pri{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:34px}
 .uname{flex:1;min-width:0}
 .uname .n{font-weight:600;font-size:15px;line-height:1.3}
 .uname .c{font-size:12px;color:var(--muted)}
-.udots{display:flex;gap:3px;align-items:center}
-.udot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.udots{display:flex;gap:3px;align-items:center;flex-wrap:wrap;max-width:120px;justify-content:flex-end}
+.udot{width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--dim) 55%,transparent)}
 .udot.e{background:var(--amber)} .udot.r{background:var(--green)} .udot.x{background:var(--red)}
-.uchev{color:var(--dim);font-size:12px;transition:transform .15s}
+.uchev{color:var(--dim);font-size:11px;transition:transform .15s}
 .ucard.open .uchev{transform:rotate(90deg)}
-.ubody{display:none;border-top:1px solid var(--line);padding:12px}
+.ubody{display:none;border-top:1px solid var(--line);padding:14px}
 .ucard.open .ubody{display:block}
-.locnote{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px}
-.locnote b{color:var(--ink)}
-.secline{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:12px 0 8px}
+.locnote{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:9px;padding:10px 12px;margin-bottom:10px}
+.locnote b,.locnote strong{color:var(--ink)}
+.secline{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:14px 0 8px;font-weight:600}
 
-/* professor cards */
-.pcard{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
-.pcard.notecard{background:transparent;border-style:dashed}
+/* ---------- professor cards ---------- */
+.pgrid{display:grid;gap:10px;margin-top:4px}
+@media(min-width:900px){.pgrid{grid-template-columns:1fr 1fr;align-items:start}}
+.pgrid .pcard{margin-bottom:0}
+.pcard{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:10px;transition:border-color .15s}
+.pgrid>.pcard,#v-eccv .pcard{background:var(--surface);box-shadow:var(--shadow)}
+.pcard.notecard{background:transparent;border-style:dashed;box-shadow:none}
 .ptop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
 .pname{font-weight:700;font-size:15px}
 .puni{font-size:12px;color:var(--muted);font-weight:400}
 .badges{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
-.bdg{font-size:11px;font-weight:600;font-family:var(--mono);padding:2px 7px;border-radius:99px;border:1px solid}
-.bdg.red{color:var(--red);border-color:var(--red)}
-.bdg.amber{color:var(--amber);border-color:var(--amber)}
-.bdg.green{color:var(--green);border-color:var(--green)}
-.bdg.teal{color:var(--teal);border-color:var(--teal)}
+.bdg{font-size:10.5px;font-weight:600;font-family:var(--mono);padding:2px 8px;border-radius:99px;border:1px solid}
+.bdg.red{color:var(--red);border-color:color-mix(in srgb,var(--red) 60%,transparent);background:color-mix(in srgb,var(--red) 8%,transparent)}
+.bdg.amber{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 60%,transparent);background:color-mix(in srgb,var(--amber) 8%,transparent)}
+.bdg.green{color:var(--green);border-color:color-mix(in srgb,var(--green) 60%,transparent);background:color-mix(in srgb,var(--green) 8%,transparent)}
+.bdg.teal{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 60%,transparent);background:color-mix(in srgb,var(--teal) 8%,transparent)}
 .bdg.grey{color:var(--muted);border-color:var(--line)}
 .pstatus{font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:6px}
-.stmt{font-size:13.5px;color:#cfd5dc;white-space:pre-line}
+.stmt{font-size:13.5px;color:var(--body);white-space:pre-line}
 .stmt.clip{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .more{font-size:12px;color:var(--blue);margin-top:3px;padding:2px 0}
-.contact{margin-top:8px;font-size:12.5px;background:var(--bg);border-radius:7px;padding:8px 10px;border:1px solid var(--line)}
-.contact b{font-size:11px;letter-spacing:.08em;color:var(--dim);display:block;text-transform:uppercase;margin-bottom:2px}
+.contact{margin-top:8px;font-size:12.5px;background:var(--bg);border-radius:8px;padding:9px 11px;border:1px solid var(--line);color:var(--body)}
+.contact b{font-size:10.5px;letter-spacing:.08em;color:var(--dim);display:block;text-transform:uppercase;margin-bottom:2px}
 .src{font-size:11px;color:var(--dim);margin-top:6px;font-family:var(--mono);word-break:break-all}
 
-/* pipeline */
+/* pipeline stage buttons */
 .pipe{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
-.stg{flex:1;min-width:60px;font-size:12px;font-weight:600;padding:7px 4px;border-radius:7px;border:1px solid var(--line);color:var(--muted);text-align:center}
-.stg.hit{border-color:var(--amber);color:var(--amber);background:#241f16}
-.stg.hit.g{border-color:var(--green);color:var(--green);background:#182219}
-.stg.hit.r{border-color:var(--red);color:var(--red);background:#241715}
+.stg{flex:1;min-width:60px;font-size:12px;font-weight:600;padding:7px 4px;border-radius:8px;border:1px solid var(--line);color:var(--muted);text-align:center;transition:border-color .12s,color .12s}
+.stg:hover{border-color:var(--line2)}
+.stg.hit{border-color:var(--amber);color:var(--amber);background:color-mix(in srgb,var(--amber) 10%,transparent)}
+.stg.hit.g{border-color:var(--green);color:var(--green);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.stg.hit.r{border-color:var(--red);color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent)}
 .sdate{font-family:var(--mono);font-size:10px;display:block;margin-top:2px;font-weight:400}
 .noteta{margin-top:8px;min-height:38px;font-size:13px;resize:vertical}
-.notelbl{font-size:11px;color:var(--dim);margin-top:8px;letter-spacing:.06em;text-transform:uppercase}
+.notelbl{font-size:11px;color:var(--dim);margin-top:8px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
 
-/* filters */
-.fbar{display:flex;gap:6px;overflow-x:auto;padding:10px 0;-webkit-overflow-scrolling:touch}
+/* ---------- kanban ---------- */
+.kb{display:grid;grid-auto-flow:column;grid-auto-columns:min(268px,78vw);gap:12px;overflow-x:auto;padding:4px 2px 14px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.kcol{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;max-height:calc(100vh - 210px);min-height:180px;scroll-snap-align:start;box-shadow:var(--shadow)}
+.kcol .khead{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.kcol .khead .kn{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:500}
+.kcards{overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:7px}
+.kcard{background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;cursor:pointer;text-align:left;transition:border-color .12s}
+.kcard:hover{border-color:var(--line2)}
+.kcard .kn1{font-weight:600;font-size:13px;line-height:1.3}
+.kcard .kn2{font-size:11.5px;color:var(--muted);margin-top:1px}
+.kcard .kmeta{display:flex;align-items:center;gap:6px;margin-top:6px}
+.kcard .kago{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.kcard .kago.late{color:var(--amber);font-weight:600}
+.kadv{margin-left:auto;font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.kadv:hover{color:var(--amber);border-color:var(--amber)}
+
+/* ---------- filters ---------- */
+.fbar{display:flex;gap:6px;overflow-x:auto;padding:12px 0 8px;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+@media(min-width:960px){.fbar{flex-wrap:wrap}}
 .fbar::-webkit-scrollbar{display:none}
-.fchip{white-space:nowrap;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-.fchip.on{border-color:var(--amber);color:var(--amber);background:#241f16}
-.search{margin-top:10px}
-.count{font-size:12px;color:var(--dim);font-family:var(--mono);margin:8px 2px}
+.fchip{white-space:nowrap;font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:99px;border:1px solid var(--line);color:var(--muted);background:var(--surface);transition:border-color .12s,color .12s}
+.fchip:hover{border-color:var(--line2);color:var(--ink)}
+.fchip.on{border-color:var(--amber);color:var(--amber);background:color-mix(in srgb,var(--amber) 10%,transparent)}
+.sortsel{width:auto;flex-shrink:0;padding:6px 10px;border-radius:99px;font-size:12.5px;font-weight:600;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.sortsel:hover{border-color:var(--line2)}
+.search{margin-top:6px;padding:10px 12px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}
+.count{font-size:12px;color:var(--dim);font-family:var(--mono);margin:10px 2px}
 
-/* settings modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none;align-items:flex-end;justify-content:center}
+/* ---------- modals ---------- */
+.modal{position:fixed;inset:0;background:rgba(8,10,13,.55);z-index:60;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 .modal.open{display:flex}
-.sheet{position:relative;background:var(--surface);border-radius:14px 14px 0 0;padding:18px 16px 30px;width:100%;max-width:780px;max-height:85vh;overflow:auto}
+.sheet{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:20px 18px 34px;width:100%;max-width:780px;max-height:88vh;overflow:auto;box-shadow:var(--shadow-lg)}
+@media(min-width:700px){
+  .modal{align-items:center;padding:24px}
+  .sheet{border-radius:16px;max-width:620px;padding-bottom:22px}
+}
 .mclose{position:absolute;top:12px;right:12px;font-size:15px;color:var(--muted);padding:6px 9px;border-radius:8px}
 .mclose:hover{color:var(--ink);background:var(--surface2)}
 [data-pdetail]{cursor:pointer}
 .pname[data-pdetail]:hover,.crow:hover .cn{text-decoration:underline;text-decoration-color:var(--dim)}
 .brow[data-pdetail]{transition:background .15s}
 .brow[data-pdetail]:hover{background:var(--surface2)}
-.mini .row{cursor:pointer;border-radius:8px;transition:background .15s}
-.mini .row:hover{background:var(--surface2)}
 .sheet h3{font-size:16px;margin-bottom:12px}
 .sheet label{font-size:12px;color:var(--muted);display:block;margin:12px 0 4px}
 .btnrow{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.btn{font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:8px;border:1px solid var(--line);color:var(--ink)}
+.btn{font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:9px;border:1px solid var(--line);color:var(--ink);background:var(--surface);transition:border-color .12s}
+.btn:hover{border-color:var(--line2)}
 .btn.primary{background:var(--amber);color:#1a1408;border-color:var(--amber)}
-.btn.danger{color:var(--red);border-color:var(--red)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 55%,transparent)}
 .hint{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.5}
-.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:9px 16px;border-radius:99px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:9px 16px;border-radius:99px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:var(--shadow-lg);white-space:nowrap}
+@media(min-width:960px){.toast{bottom:24px}}
 .toast.show{opacity:1}
 
-/* progress overview */
-.progress{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+/* ---------- command palette ---------- */
+.cmdk{align-items:flex-start;padding:12vh 14px 14px}
+.cmdsheet{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:100%;max-width:560px;box-shadow:var(--shadow-lg);overflow:hidden}
+.cmdsheet input{border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:14px 16px;font-size:15px}
+.cmdsheet input:focus{outline:none}
+.cmdlist{max-height:min(400px,50vh);overflow-y:auto;padding:6px}
+.cmditem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:9px;font-size:13.5px}
+.cmditem.sel,.cmditem:hover{background:var(--surface2)}
+.cmditem .ct{font-family:var(--mono);font-size:9.5px;font-weight:600;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--dim);min-width:38px;text-align:center;flex-shrink:0}
+.cmditem.sel .ct{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 55%,transparent)}
+.cmditem .cl{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmditem .cs2{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto;padding-left:10px;flex-shrink:1}
+.cmdfoot{display:flex;gap:14px;padding:8px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--dim)}
+
+/* ---------- progress ---------- */
+.progress{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
 .ptop2{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
 .ptop2 b{font-family:var(--mono);font-size:16px}
-.pbar{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;display:flex;margin-top:8px}
+.pbar{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;display:flex;margin-top:9px}
 .pbar i{display:block;height:100%}
-.plegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted)}
+.plegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--muted)}
 .plegend b{font-family:var(--mono);color:var(--ink)}
-.dotk{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:baseline}
+.dotk{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:baseline;flex-shrink:0}
 
-/* uni info grid + application status */
-.uinfo{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px}
+/* ---------- uni info grid + application status ---------- */
+.uinfo{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;background:var(--surface2);border-radius:9px;padding:10px 12px;margin-bottom:10px}
 .uinfo b{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;white-space:nowrap;padding-top:1px}
-.uinfo span{color:#cfd5dc;word-break:break-word}
+.uinfo span{color:var(--body);word-break:break-word}
 .appchips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
-.appc{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-.appc.on{border-color:var(--blue);color:var(--blue);background:#1a2230}
-.apptag{font-size:10px;font-weight:700;font-family:var(--mono);padding:2px 6px;border-radius:4px;background:#1a2230;color:var(--blue);white-space:nowrap}
+.appc{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:99px;border:1px solid var(--line);color:var(--muted);transition:border-color .12s,color .12s}
+.appc:hover{border-color:var(--line2)}
+.appc.on{border-color:var(--blue);color:var(--blue);background:color-mix(in srgb,var(--blue) 10%,transparent)}
+.apptag{font-size:10px;font-weight:700;font-family:var(--mono);padding:2px 6px;border-radius:5px;background:color-mix(in srgb,var(--blue) 13%,transparent);color:var(--blue);white-space:nowrap}
+.appc.g.on{border-color:var(--green);color:var(--green);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.apptag.doctag{background:color-mix(in srgb,var(--green) 13%,transparent);color:var(--green)}
 
-/* dates form */
-.dform{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:14px}
+/* ---------- dates form ---------- */
+.dform{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:14px;box-shadow:var(--shadow)}
 .dform .frow{display:flex;gap:8px;margin-bottom:8px}
-.delx{color:var(--red);font-size:14px;padding:4px 8px;opacity:.7}
+.delx{color:var(--red);font-size:14px;padding:4px 8px;opacity:.65}
 .delx:hover{opacity:1}
 
-/* follow-up + docs + compact rows */
-.fubtn{font-size:12px;font-weight:600;color:var(--amber);border:1px solid var(--amber);border-radius:99px;padding:5px 12px;margin-top:10px}
+/* ---------- follow-up + compact rows ---------- */
+.fubtn{font-size:12px;font-weight:600;color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 60%,transparent);border-radius:99px;padding:5px 12px;margin-top:10px}
+.fubtn:hover{background:color-mix(in srgb,var(--amber) 10%,transparent)}
 .fuline{font-size:11px;color:var(--dim);font-family:var(--mono);margin-left:10px}
-.appc.g.on{border-color:var(--green);color:var(--green);background:#182219}
-.apptag.doctag{background:#1f2a22;color:var(--green)}
-.crow{display:flex;align-items:center;width:100%;text-align:left;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;background:var(--surface)}
+.crow{display:flex;align-items:center;width:100%;text-align:left;gap:9px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:13px;background:var(--surface);transition:background .12s}
 .crow:last-child{border-bottom:none}
 .crow:hover{background:var(--surface2)}
 .crow .cn{font-weight:600;white-space:nowrap}
 .crow .cu{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .crow .cs{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
-/* eccv */
-.prio{font-family:var(--mono);font-weight:700;font-size:11px;border-radius:5px;padding:2px 8px;border:1px solid;flex-shrink:0}
-.prio.S{color:var(--amber);border-color:var(--amber);background:#241f16}
-.prio.A{color:var(--green);border-color:var(--green);background:#182219}
-.prio.B{color:var(--blue);border-color:var(--blue);background:#1a2230}
+/* ---------- eccv ---------- */
+.prio{font-family:var(--mono);font-weight:700;font-size:11px;border-radius:6px;padding:2px 8px;border:1px solid;flex-shrink:0}
+.prio.S{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 60%,transparent);background:color-mix(in srgb,var(--amber) 10%,transparent)}
+.prio.A{color:var(--green);border-color:color-mix(in srgb,var(--green) 60%,transparent);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.prio.B{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 60%,transparent);background:color-mix(in srgb,var(--blue) 10%,transparent)}
 .prio.C{color:var(--muted);border-color:var(--line)}
-.epaper{font-size:12.5px;color:#cfd5dc;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 10px;margin-top:7px}
+.epaper{font-size:12.5px;color:var(--body);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-top:7px}
 .esess{display:block;font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:2px}
 .star{font-size:16px;color:var(--dim);padding:2px 6px;flex-shrink:0}
 .star.on{color:var(--amber)}
 
+/* ---------- links, locations, inline email copy ---------- */
+.plinks{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px;align-items:center}
+.lwho{font-size:11px;color:var(--dim);font-weight:600;margin:0 2px 0 4px}
+.lwho:first-child{margin-left:0}
+.lchip{font-size:11px;font-weight:600;font-family:var(--mono);padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--blue);text-decoration:none;background:color-mix(in srgb,var(--blue) 5%,transparent);white-space:nowrap}
+.lchip:hover{border-color:color-mix(in srgb,var(--blue) 60%,transparent)}
+.ltopics{font-size:12px;color:var(--muted);margin:0 0 7px}
+.ltopics b{color:var(--dim);text-transform:uppercase;font-size:10px;letter-spacing:.06em}
+.contchip{font-size:9px;font-weight:700;font-family:var(--mono);padding:1px 5px;border-radius:4px;border:1px solid;vertical-align:1px;white-space:nowrap}
+.contchip.eu{color:var(--eu);border-color:color-mix(in srgb,var(--eu) 55%,transparent)}
+.contchip.na{color:var(--na);border-color:color-mix(in srgb,var(--na) 55%,transparent)}
+.contchip.asia{color:var(--asia);border-color:color-mix(in srgb,var(--asia) 55%,transparent)}
+.contchip.aus{color:var(--aus);border-color:color-mix(in srgb,var(--aus) 55%,transparent)}
+.puni2{font-size:12px;color:var(--muted);font-weight:400;margin-top:1px}
+.elink{color:var(--blue);padding:0;font-family:var(--mono);font-size:.95em;border-bottom:1px dashed color-mix(in srgb,var(--blue) 45%,transparent);word-break:break-all;text-align:left}
+.elink::after{content:" ⧉";font-size:.85em;opacity:.7}
+.stmt a,.contact a,.locnote a,.src a{color:var(--blue);word-break:break-all}
+.epaper a{color:inherit;text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--blue) 45%,transparent)}
+.epaper a:hover{color:var(--blue)}
+
 /* hover polish */
-.ucard,.pcard,.stat{transition:border-color .15s}
-.ucard:hover,.stat:hover{border-color:#3d4854}
+.ucard:hover,.stat:hover,.pgrid>.pcard:hover{border-color:var(--line2)}
 .stat:active{transform:scale(.98)}
-.btn:hover,.fchip:hover{border-color:var(--muted)}
-.copybtn{font-size:11.5px;color:var(--blue);font-family:var(--mono);margin-top:4px;padding:2px 0;display:inline-block}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-@media(min-width:600px){.statgrid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
-<header>
-  <div class="hbar">
+<div class="app">
+  <aside class="side">
     <div class="brand">PhD <span>Command</span></div>
-    <div>
-      <span class="syncdot" id="syncdot" title="sync status"></span>
-      <button class="gear" id="gearBtn" aria-label="Settings">⚙</button>
+    <nav class="snav">
+      <button class="navbtn on" data-v="today">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+        Today <span class="navbadge" data-badge></span></button>
+      <button class="navbtn" data-v="schools">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 10.8V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.2"/><path d="M22 8v5"/></svg>
+        Schools</button>
+      <button class="navbtn" data-v="people">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M3 19.5c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"/><circle cx="17" cy="9" r="2.6"/><path d="M17.5 14.5c2.2.4 3.9 2 3.9 4.4"/></svg>
+        People</button>
+      <button class="navbtn" data-v="pipeline">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="4.6" height="16" rx="1.2"/><rect x="9.7" y="4" width="4.6" height="10" rx="1.2"/><rect x="16.4" y="4" width="4.6" height="13" rx="1.2"/></svg>
+        Pipeline</button>
+      <button class="navbtn" data-v="dates">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        Dates</button>
+      <button class="navbtn" data-v="eccv">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 3.5 14.5 9l6 .6-4.5 4 1.3 5.9-5.3-3.1-5.3 3.1L8 13.6l-4.5-4 6-.6L12 3.5z"/></svg>
+        ECCV</button>
+    </nav>
+    <div class="sfoot">
+      <button class="sideact" data-open-cmdk>
+        <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+        Search everything <span class="kbd">⌘K</span></button>
+      <button class="sideact" data-theme-toggle>
+        <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg>
+        <span data-theme-label>Light mode</span></button>
+      <button class="sideact" data-open-settings>
+        <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3H9.8L9.4 5.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4.4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>
+        Sync settings <span class="syncdot" style="margin-left:auto"></span></button>
+      <div class="hint" style="padding:4px 10px 0;margin:0" id="syncLabel"></div>
     </div>
-  </div>
-  <nav id="tabs">
-    <button data-v="today" class="on">Today</button>
-    <button data-v="schools">Schools</button>
-    <button data-v="people">People</button>
-    <button data-v="dates">Dates</button>
-    <button data-v="eccv">ECCV</button>
-  </nav>
-</header>
+  </aside>
 
-<main class="wrap">
-  <section id="v-today"></section>
-  <section id="v-schools" hidden></section>
-  <section id="v-people" hidden></section>
-  <section id="v-dates" hidden></section>
-  <section id="v-eccv" hidden></section>
-</main>
+  <div class="content">
+    <header class="mhead">
+      <div class="hbar">
+        <div class="brand" style="padding:0">PhD <span>Command</span></div>
+        <div class="hacts">
+          <span class="syncdot" title="sync status"></span>
+          <button class="iconbtn" data-open-cmdk aria-label="Search">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></button>
+          <button class="iconbtn" data-theme-toggle aria-label="Toggle theme">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg></button>
+          <button class="iconbtn" data-open-settings aria-label="Settings">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3H9.8L9.4 5.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4.4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section id="v-today"></section>
+      <section id="v-schools" hidden></section>
+      <section id="v-people" hidden></section>
+      <section id="v-pipeline" hidden></section>
+      <section id="v-dates" hidden></section>
+      <section id="v-eccv" hidden></section>
+    </main>
+  </div>
+</div>
+
+<nav class="bottombar">
+  <button class="navbtn on" data-v="today" data-mobile-badge>
+    <svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+    Today</button>
+  <button class="navbtn" data-v="schools">
+    <svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 10.8V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.2"/></svg>
+    Schools</button>
+  <button class="navbtn" data-v="people">
+    <svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><circle cx="9" cy="8" r="3.4"/><path d="M3 19.5c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"/><circle cx="17" cy="9" r="2.6"/><path d="M17.5 14.5c2.2.4 3.9 2 3.9 4.4"/></svg>
+    People</button>
+  <button class="navbtn" data-v="pipeline">
+    <svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="3" y="4" width="4.6" height="16" rx="1.2"/><rect x="9.7" y="4" width="4.6" height="10" rx="1.2"/><rect x="16.4" y="4" width="4.6" height="13" rx="1.2"/></svg>
+    Pipeline</button>
+  <button class="navbtn" data-v="dates">
+    <svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    Dates</button>
+  <button class="navbtn" data-v="eccv">
+    <svg class="ic" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 3.5 14.5 9l6 .6-4.5 4 1.3 5.9-5.3-3.1-5.3 3.1L8 13.6l-4.5-4 6-.6L12 3.5z"/></svg>
+    ECCV</button>
+</nav>
 
 <div class="modal" id="settings">
   <div class="sheet">
@@ -253,14 +433,23 @@ h2{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
   </div>
 </div>
 <div class="modal" id="profModal"><div class="sheet" id="profSheet"></div></div>
+<div class="modal cmdk" id="cmdk">
+  <div class="cmdsheet">
+    <input id="cmdInput" placeholder="Search professors, schools, deadlines… " autocomplete="off" spellcheck="false">
+    <div class="cmdlist" id="cmdList"></div>
+    <div class="cmdfoot"><span>↑↓ navigate</span><span>↵ open</span><span>esc close</span></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="data.js"></script>
 <script src="eccv.js"></script>
+<script src="links.js"></script>
 <script>
 "use strict";
 const D = window.PHD_DATA;
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 const uniById = {}; D.universities.forEach(u=>uniById[u.id]=u);
 const profsByUni = {}; D.professors.forEach(p=>{(profsByUni[p.uniId]=profsByUni[p.uniId]||[]).push(p)});
 const STAGES = [["emailed","Emailed"],["replied","Replied"],["interview","Interview"],["offer","Offer"],["rejected","No / Rej."]];
@@ -269,6 +458,21 @@ const APP_STAGES = [["prep","Preparing"],["submitted","Submitted"],["interview",
 const APP_LBL = Object.fromEntries(APP_STAGES);
 const APP_RANK = {offer:6,interview:5,submitted:4,prep:3,rejected:1};
 const DOCS = [["sop","SOP"],["cv","CV"],["lor1","LoR 1"],["lor2","LoR 2"],["lor3","LoR 3"],["transcripts","Transcripts"],["fee","Fee paid"]];
+
+/* ---------- theme ---------- */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  $("#metaTheme").content = t==="light" ? "#f2f0e9" : "#0f1216";
+  $$("[data-theme-label]").forEach(el=>el.textContent = t==="light"?"Dark mode":"Light mode");
+}
+let theme = localStorage.getItem("phdTheme") || "dark";
+applyTheme(theme);
+document.addEventListener("click",e=>{
+  if(e.target.closest("[data-theme-toggle]")){
+    theme = theme==="light"?"dark":"light";
+    localStorage.setItem("phdTheme",theme); applyTheme(theme);
+  }
+});
 
 /* ---------- state ---------- */
 let state = {profs:{}, unis:{}, dates:{}, v:1};
@@ -281,7 +485,12 @@ function touch(o){ o.ts = Date.now(); saveLocal(); queueSync(); }
 /* ---------- sync ---------- */
 const cfg = {url: localStorage.getItem("phdWorkerUrl")||"", tok: localStorage.getItem("phdWorkerTok")||""};
 let syncTimer=null, syncState="local";
-function setDot(s){ syncState=s; const d=$("#syncdot"); d.className="syncdot "+(s==="ok"?"ok":s==="err"?"err":"local"); }
+function setDot(s){
+  syncState=s;
+  $$(".syncdot").forEach(d=>d.className="syncdot "+(s==="ok"?"ok":s==="err"?"err":"local"));
+  const lbl=$("#syncLabel");
+  if(lbl) lbl.textContent = !cfg.url ? "Offline — this device only" : (s==="ok"?"Synced":s==="err"?"Sync error — check settings":"Local changes pending");
+}
 function mergeStates(a,b){ // entity-wise last-write-wins
   const out={profs:{...a.profs},unis:{...a.unis},dates:{...(a.dates||{})},v:1};
   for(const k in b.profs){ if(!out.profs[k]||(b.profs[k].ts||0)>(out.profs[k].ts||0)) out.profs[k]=b.profs[k]; }
@@ -317,7 +526,23 @@ function queueSync(){
 /* ---------- helpers ---------- */
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); }
 function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function fmtStmt(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"); }
+/* linkify runs on already-escaped text: emails become copy buttons,
+   URLs (full or bare like werkenbij.uva.nl/en/phd) become new-tab links */
+const TLD_RE = "com|org|net|edu|gov|io|ai|ch|de|nl|uk|ca|au|nz|sg|hk|cn|jp|kr|tw|fr|it|se|dk|fi|no|at|be|es|pt|il|in|cz|pl|gr|ie|ae|sa|qa|my|xyz|dev|info|eu";
+function linkify(html){
+  html = html.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
+    m=>`<button class="elink" data-copy="${m}" title="Copy email address">${m}</button>`);
+  html = html.replace(/https?:\/\/[^\s<>"']+/g, m=>{
+    const t=m.replace(/[.,;:)\]]+$/,""); const rest=m.slice(t.length);
+    return `<a href="${t}" target="_blank" rel="noopener">${t}</a>${rest}`;
+  });
+  html = html.replace(new RegExp("(^|[\\s(])((?:[a-z0-9-]+\\.)+(?:"+TLD_RE+")\\b(?:/[^\\s<>\"')]*)?)","gi"), (m,pre,dom)=>{
+    const t=dom.replace(/[.,;:)\]]+$/,""); const rest=dom.slice(t.length);
+    return `${pre}<a href="https://${t}" target="_blank" rel="noopener">${t}</a>${rest}`;
+  });
+  return html;
+}
+function fmtStmt(s){ return linkify(esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")); }
 function daysTo(dstr){ const d=new Date(dstr+"T23:59:59"); return Math.ceil((d-new Date())/86400000); }
 function fdate(ts){ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate(); }
 function daysAgo(ts){ return Math.floor((Date.now()-ts)/86400000); }
@@ -326,15 +551,43 @@ function lastPing(ps){ return Math.max(ps.dates.emailed||0, ...(ps.fu||[])); }
    so "Chang Wen Chen"="Changwen Chen", "Joyce Y. Chai"="Joyce Chai" */
 function nameKey(n){
   return (n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
-    .replace(/\(.*?\)/g," ").replace(/[^a-z ]/g," ")
+    .replace(/\(.*?\)/g," ").replace(/\[.*?\]/g," ").replace(/[^a-z ]/g," ")
     .split(/\s+/).filter(w=>w.length>1).join("");
 }
+const LINKS = window.PHD_LINKS || {profs:{},papers:{}};
 const ECCV = window.ECCV_DATA || {professors:[],papers:{},generated:"",note:""};
 const eccvByKey = {}; ECCV.professors.forEach(e=>eccvByKey[nameKey(e.name)]=e);
 const ECCV_RANK = {S:4,A:3,B:2,C:1};
+/* profile links from links.js (source spreadsheets + web-verified) with eccv.js fallback.
+   Combined entries like "Hao Su / Zhuowen Tu" get one link group per person. */
+function linksForName(nm){
+  const k = nameKey(nm);
+  const l = LINKS.profs[k]||{}; const e = eccvByKey[k]||{};
+  return {
+    links: [["Homepage",l.home||e.url],["Faculty page",l.faculty],["Scholar",l.scholar||e.scholar],["DBLP",l.dblp],["ORCID",l.orcid]].filter(x=>x[1]),
+    topics: l.topics||""
+  };
+}
+function profLinksHtml(name, withTopics){
+  const parts = name.replace(/\(.*?\)|\[.*?\]/g," ").split("/").map(s=>s.trim()).filter(Boolean);
+  const groups = parts.map(nm=>({nm,...linksForName(nm)})).filter(g=>g.links.length||(withTopics&&g.topics));
+  if(!groups.length) return "";
+  const multi = groups.length>1;
+  const lastName = nm=>esc(nm.replace(/\(.*?\)|\[.*?\]/g," ").replace(/[^\w\s-]/g,"").trim().split(/\s+/).pop()||nm);
+  let out = groups.some(g=>g.links.length) ? `<div class="plinks">`+groups.map(g=>
+    (multi&&g.links.length?`<span class="lwho">${lastName(g.nm)}:</span>`:"")+
+    g.links.map(([lbl,u])=>`<a class="lchip" href="${esc(u)}" target="_blank" rel="noopener">${lbl} ↗</a>`).join("")
+  ).join("")+`</div>` : "";
+  if(withTopics) out += groups.filter(g=>g.topics).map(g=>
+    `<div class="ltopics"><b>ECCV work${multi?" · "+lastName(g.nm):""}:</b> ${esc(g.topics)}</div>`).join("");
+  return out;
+}
+const CONT_LBL = {eu:"EU",na:"N.AM",asia:"ASIA",aus:"AUS"};
+function contChip(u){ return u&&u.continent?`<span class="contchip ${u.continent}">${CONT_LBL[u.continent]||u.continent}</span>`:""; }
+function uniLoc(u){ return u?[u.city,u.country].filter(Boolean).join(", "):""; }
 function draftMail(p, em){
   const uni = uniById[p.uniId]||{};
-  const last = p.name.trim().split(/\s+/).pop();
+  const last = p.name.split("/")[0].replace(/\(.*?\)|\[.*?\]/g," ").replace(/[^\w\s.-]/g,"").trim().split(/\s+/).pop() || p.name;
   const subj = p.flags.subjectLine ? "" : "Prospective PhD applicant — [your topic]";
   const fit = ((uni.overlap||"").match(/^[^.]*\./)||[""])[0].trim();
   const body = `Dear Prof. ${last},\n\n[Introduce yourself: name, current role, one-line research identity.]\n\n[Why them: ${fit?fit.slice(0,220):"reference a specific recent paper and connect it to your work"}]\n\n[1-2 concrete results. Mention CV attached.]\n\nBest regards,\n[Your name]`
@@ -372,6 +625,16 @@ function exportICS(){
   a.download="phd-deadlines.ics"; a.click();
   toast(evs.length+" dates exported");
 }
+/* application method: derived from the same flags/contact text already shown as badges —
+   used for the People sort/filter, not a new data source */
+function appMethod(p){
+  if(p.flags.doNotEmail) return "portal";
+  if(p.flags.form) return "form";
+  if(/[\w.+-]+@[\w.-]+\.\w+/.test(p.contact||"")) return "email";
+  return "unspecified";
+}
+const APP_METHOD_LBL = {email:"Direct email",form:"Application form",portal:"Portal / do-not-email",unspecified:"Unspecified"};
+const APP_METHOD_ORDER = ["email","form","portal","unspecified"];
 function profBadges(p){
   const b=[];
   if(p.flags.doNotEmail) b.push('<span class="bdg red">DO NOT EMAIL · portal</span>');
@@ -380,6 +643,7 @@ function profBadges(p){
   if(p.flags.visiting) b.push('<span class="bdg teal">VISITING ROUTE</span>');
   if(p.flags.recruiting && !p.flags.warning) b.push('<span class="bdg green">RECRUITING</span>');
   if(p.flags.warning) b.push('<span class="bdg red">⚠ CAUTION</span>');
+  if(!p.flags.doNotEmail && !p.flags.form && appMethod(p)==="email") b.push('<span class="bdg grey">EMAIL</span>');
   return b.join("");
 }
 function stageMark(p){ // dashboard dot class for a professor
@@ -400,16 +664,19 @@ function profCard(p, showUni){
     const dt = ps.dates[k] ? `<span class="sdate">${fdate(ps.dates[k])}</span>` : "";
     return `<button class="${cls}" data-stg="${k}" data-p="${p.id}">${lbl}${dt}</button>`;
   }).join("")+`</div>`;
+  const uni = uniById[p.uniId];
   return `<div class="pcard${note?" notecard":""}" id="pc-${p.id}">
     <div class="ptop"><div>
-      <div class="pname" data-pdetail="${p.id}">${esc(p.name)}${showUni?` <span class="puni">· ${esc(p.uniName)}</span>`:""}</div>
+      <div class="pname" data-pdetail="${p.id}">${esc(p.name)}</div>
+      ${showUni?`<div class="puni2">${esc(p.uniName)}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>`:""}
     </div></div>
     <div class="badges">${profBadges(p)}</div>
+    ${note?"":profLinksHtml(p.name,false)}
     ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
     <div class="stmt clip" id="st-${p.id}">${fmtStmt(p.statement)}</div>
     <button class="more" data-more="${p.id}">show full</button>
-    ${p.contact?`<div class="contact"><b>How to reach</b>${fmtStmt(p.contact)}${(m=>m?`<br><button class="copybtn" data-copy="${esc(m)}">⧉ copy ${esc(m)}</button>${p.flags.doNotEmail?"":` <a class="copybtn" href="${draftMail(p,m)}">✉ draft email</a>`}`:"")((p.contact.match(/[\w.+-]+@[\w.-]+\.\w+/)||[])[0])}</div>`:""}
-    ${p.source?`<div class="src">${esc(p.source)}</div>`:""}
+    ${p.contact?`<div class="contact"><b>How to reach</b>${fmtStmt(p.contact)}${(m=>m?`<br><button class="copybtn more" data-copy="${esc(m)}">⧉ copy email</button>${p.flags.doNotEmail?"":` <a class="copybtn more" href="${draftMail(p,m)}">✉ draft email</a>`}`:"")((p.contact.match(/[\w.+-]+@[\w.-]+\.\w+/)||[])[0])}</div>`:""}
+    ${p.source?`<div class="src">Source: ${linkify(esc(p.source))}</div>`:""}
     ${pipe}
     ${!note && ps.stage==="emailed" ? `<button class="fubtn" data-fu="${p.id}">↻ log follow-up${(ps.fu&&ps.fu.length)?` (${ps.fu.length})`:""}</button><span class="fuline">last contact ${daysAgo(lastPing(ps))}d ago</span>` : ""}
     ${note?"":`<div class="notelbl">Notes</div><textarea class="noteta" data-note="${p.id}" placeholder="e.g. emailed with CVPR paper attached, mentioned DoCoG…">${esc(ps.notes)}</textarea>`}
@@ -423,7 +690,9 @@ function papersHtml(e,pid){
   const shown=open?ids:ids.slice(0,3);
   const list=shown.map(id=>{
     const pp=ECCV.papers[id]; if(!pp) return "";
-    return `<div class="epaper">${esc(pp.title)}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
+    const u=LINKS.papers[id];
+    const title=u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(pp.title)} ↗</a>`:esc(pp.title);
+    return `<div class="epaper">${title}<span class="esess">${esc(pp.session||"")}${pp.poster?" · poster "+esc(String(pp.poster)):""}</span></div>`;
   }).join("");
   const rest=ids.length-3;
   const toggle = rest>0 ? `<button class="more" data-morepapers="${pid}">${open?"show fewer papers":`show ${rest} more paper${rest>1?"s":""}`}</button>` : "";
@@ -451,13 +720,14 @@ function profDetailHtml(pid){
   return `
     <button class="mclose" data-pmclose="1" aria-label="Close">✕</button>
     <div class="pname" style="font-size:18px;padding-right:28px">${esc(p.name)}</div>
-    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(p.uniName)}${uni?(" · "+esc(uni.city)+(uni.city?", ":"")+esc(uni.country)):""}</div>
+    <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(p.uniName)}${uni?(" · "+esc(uni.city)+(uni.city?", ":"")+esc(uni.country)):""} ${contChip(uni)}</div>
     <div class="badges">${profBadges(p)}${e?`<span class="prio ${e.priority||"C"}">ECCV ${e.priority||"?"}</span>`:""}</div>
+    ${profLinksHtml(p.name,true)}
     ${p.status?`<div class="pstatus">${esc(p.status)}</div>`:""}
     <div class="secline" style="margin-top:14px">In their own words — what they're looking for</div>
     <div class="stmt">${p.statement?fmtStmt(p.statement):'<span class="empty">No statement recorded.</span>'}</div>
-    ${p.contact?`<div class="contact"><b>In their own words — how to reach</b>${fmtStmt(p.contact)}${em?`<br><button class="copybtn" data-copy="${esc(em)}">⧉ copy ${esc(em)}</button>${p.flags.doNotEmail?"":` <a class="copybtn" href="${draftMail(p,em)}">✉ draft email</a>`}`:""}</div>`:""}
-    ${p.source?`<div class="src">Source: ${esc(p.source)}</div>`:""}
+    ${p.contact?`<div class="contact"><b>In their own words — how to reach</b>${fmtStmt(p.contact)}${em?`<br><button class="copybtn more" data-copy="${esc(em)}">⧉ copy email</button>${p.flags.doNotEmail?"":` <a class="copybtn more" href="${draftMail(p,em)}">✉ draft email</a>`}`:""}</div>`:""}
+    ${p.source?`<div class="src">Source: ${linkify(esc(p.source))}</div>`:""}
     ${pipeHtml(p,ps)}
     ${!p.flags.note && ps.stage==="emailed" ? `<button class="fubtn" data-fu="${p.id}">↻ log follow-up${(ps.fu&&ps.fu.length)?` (${ps.fu.length})`:""}</button><span class="fuline">last contact ${daysAgo(lastPing(ps))}d ago</span>` : ""}
     ${e?`
@@ -482,6 +752,7 @@ function externalDetailHtml(xid){
     <div class="pname" style="font-size:18px;padding-right:28px">${esc(e.name)}</div>
     <div class="puni" style="font-size:13px;margin-bottom:8px">${esc(e.institution)}${e.country?(" · "+esc(e.country)):""}</div>
     <div class="badges"><span class="prio ${e.priority||"C"}">ECCV ${e.priority||"?"}</span></div>
+    ${profLinksHtml(e.name,true)}
     ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
     ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
     ${e.action?`<div class="stmt" style="color:var(--muted)">${esc(e.action)}</div>`:""}
@@ -540,11 +811,18 @@ function openProfModal(id){ modalProfId=id; renderProfModal(); $("#profModal").c
 function closeProfModal(){ modalProfId=null; $("#profModal").classList.remove("open"); }
 
 /* ---------- views ---------- */
+function overdueProfs(){
+  return D.professors.filter(p=>{
+    const s=pstate(p.id);
+    if(s.stage!=="emailed") return false;
+    const t=lastPing(s); return t && daysAgo(t)>=14;
+  });
+}
 function renderToday(){
   const up = allDeadlines();
   const future = up.filter(d=>d.dl>=-3).slice(0,7);
   const emailed = D.professors.filter(p=>pstate(p.id).stage==="emailed");
-  const overdue = emailed.filter(p=>{const t=lastPing(pstate(p.id)); return t && daysAgo(t)>=14;});
+  const overdue = overdueProfs();
   const replied = D.professors.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
   const contactedUnis = new Set(D.professors.filter(p=>pstate(p.id).stage).map(p=>p.uniId));
   const untouchedTop = D.universities.filter(u=>u.priority<=15 && !contactedUnis.has(u.id));
@@ -558,7 +836,7 @@ function renderToday(){
   const nApps = Object.values(state.unis).filter(u=>["submitted","interview","offer"].includes(u.app)).length;
   const pc = v=>nTot?(v/nTot*100).toFixed(1):0;
 
-  $("#v-today").innerHTML = `
+  $("#v-today").innerHTML = `<div class="tgrid"><div>
     <h2>Departures — next deadlines</h2>
     <div class="board">${future.map(d=>{
       const cls = d.dl<0?"past":d.dl<=7?"hot":d.dl<=30?"warn":"";
@@ -591,7 +869,7 @@ function renderToday(){
       <button class="stat green" data-go="people" data-preset="replied"><div class="n">${replied.length}</div><div class="t">replied / active</div></button>
       <button class="stat blue" data-go="schools"><div class="n">${untouchedTop.length}</div><div class="t">top-15 schools untouched</div></button>
     </div>
-
+  </div><div>
     <h2>Needs follow-up</h2>
     <div class="mini">${overdue.length?overdue.map(p=>{
       const t=lastPing(pstate(p.id));
@@ -601,7 +879,8 @@ function renderToday(){
     <h2>Replied — act on these</h2>
     <div class="mini">${replied.length?replied.map(p=>
       `<div class="row" data-pdetail="${p.id}"><div><div class="who">${esc(p.name)}</div><div class="sub">${esc(p.uniName)}</div></div><span class="ago" style="color:var(--green)">${pstate(p.id).stage}</span></div>`
-    ).join(""):'<div class="empty">No replies logged yet.</div>'}</div>`;
+    ).join(""):'<div class="empty">No replies logged yet.</div>'}</div>
+  </div></div>`;
 }
 
 let openUnis = new Set();
@@ -614,12 +893,16 @@ function renderSchools(){
       || (profsByUni[u.id]||[]).some(p=>p.name.toLowerCase().includes(q))); }
   if(sFilters.sort==="status") unis=[...unis].sort((a,b)=>((APP_RANK[(state.unis[b.id]||{}).app]||2)-(APP_RANK[(state.unis[a.id]||{}).app]||2))||a.priority-b.priority);
   if(sFilters.sort==="activity"){ const act=u=>Math.max((state.unis[u.id]||{}).ts||0,...(profsByUni[u.id]||[]).map(p=>(state.profs[p.id]||{}).ts||0),0); unis=[...unis].sort((a,b)=>act(b)-act(a)); }
+  if(sFilters.sort==="name") unis=[...unis].sort((a,b)=>a.name.localeCompare(b.name));
+  if(sFilters.sort==="docs"){ const dn=u=>Object.values((state.unis[u.id]||{}).docs||{}).filter(Boolean).length; unis=[...unis].sort((a,b)=>dn(b)-dn(a)||a.priority-b.priority); }
   sVisible = unis.map(u=>u.id);
   $("#v-schools").innerHTML = `
     <div class="fbar">
       ${[["eu","Europe"],["na","N.America"],["asia","Asia"],["aus","Australia"]].map(([k,l])=>`<button class="fchip${sFilters.cont===k?" on":""}" data-cont="${k}">${l}</button>`).join("")}
       <button class="fchip${sFilters.sort==="status"?" on":""}" data-sort="status">Sort: status</button>
       <button class="fchip${sFilters.sort==="activity"?" on":""}" data-sort="activity">Sort: recent</button>
+      <button class="fchip${sFilters.sort==="name"?" on":""}" data-sort="name">Sort: name</button>
+      <button class="fchip${sFilters.sort==="docs"?" on":""}" data-sort="docs">Sort: docs done</button>
       <button class="fchip" data-sx="open">Expand all</button>
       <button class="fchip" data-sx="close">Collapse all</button>
     </div>
@@ -667,13 +950,32 @@ function renderSchools(){
   s.addEventListener("input",e=>{sFilters.q=e.target.value; renderSchools(); const ns=$("#ssearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
 }
 
-let pFilters = {q:"",preset:"",chips:new Set(),compact:false};
-const CHIPS = [["recruiting","Recruiting"],["visiting","Visiting route"],["doNotEmail","Do-not-email"],["form","Form"],["warning","⚠ Caution"],["na","N.America"],["eu","Europe"],["asia","Asia"],["aus","Australia"]];
+let pFilters = {q:"",preset:"",chips:new Set(),compact:false,sort:""};
+const CHIPS = [["recruiting","Recruiting"],["visiting","Visiting route"],["doNotEmail","Do-not-email"],["form","Form"],["directEmail","Direct email"],["warning","⚠ Caution"],["na","N.America"],["eu","Europe"],["asia","Asia"],["aus","Australia"]];
+const PEOPLE_SORTS = [
+  ["","School priority (default)"],
+  ["method","Application method"],
+  ["stage","Pipeline stage"],
+  ["name","Name (A–Z)"],
+  ["activity","Recently active"],
+  ["uni","University (A–Z)"],
+];
+function sortProfs(list, sort){
+  if(!sort) return list;
+  const arr=[...list];
+  if(sort==="method") arr.sort((a,b)=>APP_METHOD_ORDER.indexOf(appMethod(a))-APP_METHOD_ORDER.indexOf(appMethod(b))||a.uniPriority-b.uniPriority);
+  else if(sort==="stage") arr.sort((a,b)=>(STAGE_ORDER[pstate(b.id).stage]||0)-(STAGE_ORDER[pstate(a.id).stage]||0)||a.uniPriority-b.uniPriority);
+  else if(sort==="name") arr.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sort==="uni") arr.sort((a,b)=>a.uniName.localeCompare(b.uniName)||a.name.localeCompare(b.name));
+  else if(sort==="activity"){ const act=p=>(state.profs[p.id]||{}).ts||0; arr.sort((a,b)=>act(b)-act(a)); }
+  return arr;
+}
 function renderPeople(){
   const chipHtml = CHIPS.map(([k,l])=>`<button class="fchip${pFilters.chips.has(k)?" on":""}" data-chip="${k}">${l}</button>`).join("");
   let list = D.professors.filter(p=>!p.flags.note);
   for(const c of pFilters.chips){
     if(["na","eu","asia","aus"].includes(c)) list=list.filter(p=>uniById[p.uniId]&&uniById[p.uniId].continent===c);
+    else if(c==="directEmail") list=list.filter(p=>appMethod(p)==="email");
     else list=list.filter(p=>p.flags[c]);
   }
   if(pFilters.preset==="awaiting") list=list.filter(p=>pstate(p.id).stage==="emailed");
@@ -681,22 +983,69 @@ function renderPeople(){
   if(pFilters.preset==="replied") list=list.filter(p=>["replied","interview"].includes(pstate(p.id).stage));
   if(pFilters.q){ const q=pFilters.q.toLowerCase();
     list=list.filter(p=>(p.name+" "+p.uniName+" "+p.statement+" "+p.status+" "+p.contact).toLowerCase().includes(q)); }
+  list = sortProfs(list, pFilters.sort);
   const listHtml = pFilters.compact
     ? `<div class="board">`+list.map(p=>{
         const s=pstate(p.id).stage;
+        const u=uniById[p.uniId];
         const col=s?(s==="rejected"?"var(--red)":s==="emailed"?"var(--amber)":"var(--green)"):"var(--dim)";
-        return `<button class="crow" data-pdetail="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cu">${esc(p.uniName)}</span><span class="cs">${s||"—"}</span></button>`;
+        return `<button class="crow" data-pdetail="${p.id}"><span class="dotk" style="background:${col}"></span><span class="cn">${esc(p.name)}</span><span class="cu">${esc(p.uniName)}${u&&u.city?` · ${esc(u.city)}`:""}</span>${contChip(u)}<span class="cs">${s||"—"}</span></button>`;
       }).join("")+`</div>`
-    : list.map(p=>profCard(p,true)).join("");
+    : `<div class="pgrid">`+list.map(p=>profCard(p,true)).join("")+`</div>`;
   $("#v-people").innerHTML = `
-    <div class="fbar"><button class="fchip${pFilters.compact?" on":""}" data-compact="1">≡ Compact</button>${chipHtml}</div>
+    <div class="fbar"><button class="fchip${pFilters.compact?" on":""}" data-compact="1">≡ Compact</button>
+      <select class="sortsel" id="psort" aria-label="Sort professors">${PEOPLE_SORTS.map(([k,l])=>`<option value="${k}"${pFilters.sort===k?" selected":""}>Sort: ${l}</option>`).join("")}</select>
+      ${chipHtml}</div>
     <input class="search" id="psearch" placeholder="Search names, statements, methods… e.g. 'grounding' or 'Dec 15'" value="${esc(pFilters.q)}">
     ${pFilters.preset?`<div class="count">preset: ${pFilters.preset} — <button class="more" id="clearPreset">clear</button></div>`:""}
     <div class="count">${list.length} professors</div>
-    ${listHtml||'<div class="empty">No matches.</div>'}`;
+    ${list.length?listHtml:'<div class="empty">No matches.</div>'}`;
+  $("#psort").addEventListener("change",e=>{pFilters.sort=e.target.value; renderPeople();});
   const s=$("#psearch");
   s.addEventListener("input",e=>{pFilters.q=e.target.value; renderPeople(); const ns=$("#psearch"); ns.focus(); ns.setSelectionRange(ns.value.length,ns.value.length);});
   const cp=$("#clearPreset"); if(cp) cp.onclick=()=>{pFilters.preset="";renderPeople();};
+}
+
+/* ---------- pipeline (kanban) ---------- */
+const KCOLS = [
+  [null,"Not contacted","var(--dim)"],
+  ["emailed","Emailed","var(--amber)"],
+  ["replied","Replied","var(--teal)"],
+  ["interview","Interview","var(--blue)"],
+  ["offer","Offer","var(--green)"],
+  ["rejected","No / Rejected","var(--red)"],
+];
+const KNEXT = {null:"emailed",emailed:"replied",replied:"interview",interview:"offer"};
+const KNEXT_LBL = {null:"Emailed",emailed:"Replied",replied:"Interview",interview:"Offer"};
+function renderPipeline(){
+  const real = D.professors.filter(p=>!p.flags.note);
+  const cols = KCOLS.map(([stage,label,color])=>{
+    let list = real.filter(p=>pstate(p.id).stage===stage);
+    if(stage==="emailed") list.sort((a,b)=>lastPing(pstate(a.id))-lastPing(pstate(b.id)));
+    const cards = list.map(p=>{
+      const ps=pstate(p.id);
+      const t = stage&&ps.dates[stage] ? ps.dates[stage] : 0;
+      const silent = stage==="emailed" ? daysAgo(lastPing(ps)) : null;
+      const next = KNEXT[stage];
+      const uni=uniById[p.uniId];
+      return `<div class="kcard" data-pdetail="${p.id}">
+        <div class="kn1">${esc(p.name)}</div>
+        <div class="kn2">${esc(p.uniName)}${uni&&uni.city?` · ${esc(uni.city)}`:""} ${contChip(uni)}</div>
+        <div class="kmeta">
+          ${silent!==null?`<span class="kago${silent>=14?" late":""}">${silent}d silent</span>`:t?`<span class="kago">since ${fdate(t)}</span>`:`<span class="kago"></span>`}
+          ${next?`<button class="kadv" data-stg="${next}" data-p="${p.id}">→ ${KNEXT_LBL[stage]}</button>`:""}
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="kcol">
+      <div class="khead" style="color:${color}"><span class="dotk" style="background:${color}"></span>${label}<span class="kn">${list.length}</span></div>
+      <div class="kcards">${cards||'<div class="empty" style="padding:20px 8px">—</div>'}</div>
+    </div>`;
+  }).join("");
+  $("#v-pipeline").innerHTML = `
+    <h2>Outreach pipeline</h2>
+    <div class="hint" style="margin-bottom:10px">Every professor by stage. Click a card for the full profile; use → to advance a stage (date auto-stamped).</div>
+    <div class="kb">${cols}</div>`;
 }
 
 function renderDates(){
@@ -734,12 +1083,9 @@ function renderEccv(){
   });
   matches.sort((a,b)=>(ECCV_RANK[b.e.priority]||0)-(ECCV_RANK[a.e.priority]||0)||(b.e.score||0)-(a.e.score||0));
 
-  const uniKey=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ")
-    .replace(/\b(the|of|at|in|university|univ|institute|institution|technology|tech|school|college)\b/g,"")
-    .replace(/\s+/g," ").trim();
-  const myUnis=D.universities.map(u=>({u,k:uniKey(u.name)}));
+  const myUnis=D.universities.map(u=>({u,k:uniKeyNorm(u.name)}));
   const others=ECCV.professors.filter(e=>!mk.has(nameKey(e.name))).map(e=>{
-    const k=uniKey(e.institution);
+    const k=uniKeyNorm(e.institution);
     const hit=myUnis.find(m=>m.k&&k&&(k.includes(m.k)||m.k.includes(k)));
     return hit?{e,uni:hit.u}:null;
   }).filter(Boolean).sort((a,b)=>(ECCV_RANK[b.e.priority]||0)-(ECCV_RANK[a.e.priority]||0)||(b.e.score||0)-(a.e.score||0));
@@ -757,16 +1103,19 @@ function renderEccv(){
         <span><span class="dotk" style="background:var(--green)"></span>met <b>${nMet}</b></span>
       </div>
     </div>
-    ${matches.map(({p,e})=>{
+    <div class="pgrid">${matches.map(({p,e})=>{
       const ps=pstate(p.id);
+      const uni=uniById[p.uniId];
       return `<div class="pcard">
         <div class="ptop"><div>
-          <div class="pname" data-pdetail="${p.id}">${esc(p.name)} <span class="puni">· ${esc(p.uniName)}</span></div>
+          <div class="pname" data-pdetail="${p.id}">${esc(p.name)}</div>
+          <div class="puni2">${esc(p.uniName)}${uniLoc(uni)?` · <span class="uloc">${esc(uniLoc(uni))}</span>`:""} ${contChip(uni)}</div>
         </div>${prio(e.priority)}</div>
         <div class="badges">
           ${ps.stage?`<span class="bdg ${ps.stage==="rejected"?"grey":ps.stage==="emailed"?"amber":"green"}">${ps.stage.toUpperCase()}</span>`:'<span class="bdg grey">NOT CONTACTED</span>'}
           ${profBadges(p)}
         </div>
+        ${profLinksHtml(p.name,false)}
         ${e.overlap?`<div class="pstatus">${esc(e.overlap)}</div>`:""}
         ${e.mention?`<div class="stmt">Pitch: ${esc(e.mention)}</div>`:""}
         ${e.action?`<div class="stmt" style="color:var(--muted);margin-top:4px">${esc(e.action)}</div>`:""}
@@ -778,27 +1127,35 @@ function renderEccv(){
           <button class="appc g${ps.eccv==="met"?" on":""}" data-eccv="${p.id}" data-est="met">Met ✓</button>
         </div>
       </div>`;
-    }).join("")||'<div class="empty">No overlaps found.</div>'}
+    }).join("")||'<div class="empty">No overlaps found.</div>'}</div>
 
     <h2>Also at ECCV from your target schools (${others.length})</h2>
     <div class="hint" style="margin-bottom:8px">Not on your outreach list, but faculty at schools you're targeting — worth a hello at their poster. Star the ones you want to catch.</div>
     <div class="board">${others.map(({e,uni})=>{
       const xid="ex-"+nameKey(e.name); const on=pstate(xid).eccv==="plan";
-      return `<div class="crow" data-pdetail="${xid}">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span><button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
+      return `<div class="crow" data-pdetail="${xid}">${prio(e.priority)}<span class="cn">${esc(e.name)}</span><span class="cu">${esc(e.institution)}</span>${contChip(uni)}<button class="star${on?" on":""}" data-eccv="${xid}" data-est="plan" aria-label="Plan to meet">${on?"★":"☆"}</button></div>`;
     }).join("")}</div>
     <div class="hint" style="margin-top:10px">${esc(ECCV.note)} Data generated ${esc(ECCV.generated)} from the ECCV navigator audit.</div>`;
 }
 
 /* ---------- render + events ---------- */
+const VIEWS = ["today","schools","people","pipeline","dates","eccv"];
 let view="today";
+function updateNavBadges(){
+  const n = overdueProfs().length;
+  $$("[data-badge]").forEach(el=>el.textContent = n? String(n):"");
+  $$("[data-mobile-badge]").forEach(el=>el.classList.toggle("hasbadge", n>0));
+}
 function render(){
-  ["today","schools","people","dates","eccv"].forEach(v=>{$("#v-"+v).hidden = v!==view;});
-  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+  VIEWS.forEach(v=>{$("#v-"+v).hidden = v!==view;});
+  $$(".navbtn").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
   if(view==="today") renderToday();
   if(view==="schools") renderSchools();
   if(view==="people") renderPeople();
+  if(view==="pipeline") renderPipeline();
   if(view==="dates") renderDates();
   if(view==="eccv") renderEccv();
+  updateNavBadges();
 }
 
 document.addEventListener("click",e=>{
@@ -843,14 +1200,101 @@ document.addEventListener("input",e=>{
   if(e.target.dataset.unote){ const us=ustate(e.target.dataset.unote); us.notes=e.target.value; touch(us); }
 });
 
+/* ---------- command palette ---------- */
+let cmdSel=0, cmdItems=[];
+function cmdCandidates(){
+  const items=[];
+  VIEWS.forEach((v,i)=>items.push({t:"view",id:v,title:"Go to "+({today:"Today",schools:"Schools",people:"People",pipeline:"Pipeline",dates:"Dates",eccv:"ECCV"})[v],sub:"tab · "+(i+1),hay:"go to tab view "+v}));
+  D.professors.filter(p=>!p.flags.note).forEach(p=>{
+    const s=pstate(p.id).stage;
+    items.push({t:"prof",id:p.id,title:p.name,sub:p.uniName+(s?" · "+s:""),hay:(p.name+" "+p.uniName).toLowerCase()});
+  });
+  D.universities.forEach(u=>items.push({t:"uni",id:u.id,title:u.name,sub:(u.city?u.city+", ":"")+u.country,hay:(u.name+" "+u.city+" "+u.country+" "+(u.program||"")).toLowerCase()}));
+  allDeadlines().filter(d=>d.dl>=-30).forEach(d=>items.push({t:"dl",id:d.dlid,title:d.label,sub:d.date+(d.uni?" · "+d.uni:""),hay:(d.label+" "+(d.uni||"")+" deadline").toLowerCase()}));
+  return items;
+}
+function cmdFilter(q){
+  const all=cmdCandidates();
+  if(!q){
+    // default: tabs + most urgent follow-ups + next deadlines
+    const urgent = overdueProfs().slice(0,3).map(p=>({t:"prof",id:p.id,title:p.name,sub:p.uniName+" · "+daysAgo(lastPing(pstate(p.id)))+"d silent"}));
+    const next = allDeadlines().filter(d=>d.dl>=0).slice(0,3).map(d=>({t:"dl",id:d.dlid,title:d.label,sub:"T−"+d.dl+"d · "+d.date}));
+    return all.filter(i=>i.t==="view").concat(urgent,next);
+  }
+  q=q.toLowerCase().trim();
+  const scored=[];
+  for(const it of all){
+    if(it.t==="view" && !it.hay.includes(q)) continue;
+    const hay=it.hay||"";
+    const idx=hay.indexOf(q);
+    if(idx<0) continue;
+    const starts = it.title.toLowerCase().startsWith(q) ? 0 : (idx===0?1:2);
+    scored.push([starts,idx,it]);
+  }
+  scored.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  return scored.slice(0,10).map(x=>x[2]);
+}
+function cmdRender(){
+  const q=$("#cmdInput").value;
+  cmdItems=cmdFilter(q);
+  if(cmdSel>=cmdItems.length) cmdSel=Math.max(0,cmdItems.length-1);
+  const tag={view:"TAB",prof:"PROF",uni:"SCHOOL",dl:"DATE"};
+  $("#cmdList").innerHTML = cmdItems.map((it,i)=>
+    `<button class="cmditem${i===cmdSel?" sel":""}" data-cmdi="${i}">
+      <span class="ct">${tag[it.t]}</span><span class="cl">${esc(it.title)}</span><span class="cs2">${esc(it.sub||"")}</span>
+    </button>`).join("") || '<div class="empty">No matches.</div>';
+}
+function cmdOpen(){ cmdSel=0; $("#cmdk").classList.add("open"); const i=$("#cmdInput"); i.value=""; cmdRender(); setTimeout(()=>i.focus(),0); }
+function cmdClose(){ $("#cmdk").classList.remove("open"); }
+function cmdGo(it){
+  if(!it) return;
+  cmdClose();
+  if(it.t==="view"){ view=it.id; render(); window.scrollTo(0,0); }
+  else if(it.t==="prof"){ openProfModal(it.id); }
+  else if(it.t==="dl"){ openProfModal("dl-"+it.id); }
+  else if(it.t==="uni"){
+    view="schools"; sFilters={q:"",cont:"",sort:""}; openUnis.add(it.id); render();
+    const el=$("#uc-"+it.id); if(el) el.scrollIntoView({block:"start",behavior:"instant"});
+    window.scrollBy(0,-70);
+  }
+}
+$("#cmdInput").addEventListener("input",()=>{cmdSel=0; cmdRender();});
+$("#cmdInput").addEventListener("keydown",e=>{
+  if(e.key==="ArrowDown"){ e.preventDefault(); cmdSel=Math.min(cmdSel+1,cmdItems.length-1); cmdRender(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); cmdSel=Math.max(cmdSel-1,0); cmdRender(); }
+  else if(e.key==="Enter"){ e.preventDefault(); cmdGo(cmdItems[cmdSel]); }
+});
+$("#cmdList").addEventListener("click",e=>{
+  const b=e.target.closest("[data-cmdi]"); if(b) cmdGo(cmdItems[+b.dataset.cmdi]);
+});
+$("#cmdk").addEventListener("click",e=>{ if(e.target.id==="cmdk") cmdClose(); });
+$$("[data-open-cmdk]").forEach(b=>b.addEventListener("click",cmdOpen));
+
+/* ---------- keyboard shortcuts ---------- */
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); $("#cmdk").classList.contains("open")?cmdClose():cmdOpen(); return; }
+  if(e.key==="Escape"){
+    if($("#cmdk").classList.contains("open")) return cmdClose();
+    if($("#profModal").classList.contains("open")) return closeProfModal();
+    if($("#settings").classList.contains("open")) return $("#settings").classList.remove("open");
+    return;
+  }
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement&&document.activeElement.tagName||"");
+  if(typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key==="/"){ e.preventDefault(); cmdOpen(); return; }
+  const n=parseInt(e.key,10);
+  if(n>=1 && n<=VIEWS.length){ view=VIEWS[n-1]; render(); window.scrollTo(0,0); }
+});
+
 /* ---------- settings ---------- */
-$("#gearBtn").onclick=()=>{ $("#setUrl").value=cfg.url; $("#setTok").value=cfg.tok;
+$$("[data-open-settings]").forEach(b=>b.addEventListener("click",()=>{
+  $("#setUrl").value=cfg.url; $("#setTok").value=cfg.tok;
   $("#syncInfo").textContent = cfg.url?`Configured. Status: ${syncState}`:"Not configured — offline mode.";
-  $("#settings").classList.add("open"); };
+  $("#settings").classList.add("open");
+}));
 $("#closeSet").onclick=()=>$("#settings").classList.remove("open");
 $("#settings").addEventListener("click",e=>{if(e.target.id==="settings")$("#settings").classList.remove("open");});
 $("#profModal").addEventListener("click",e=>{if(e.target.id==="profModal")closeProfModal();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeProfModal();});
 $("#saveSet").onclick=()=>{
   cfg.url=$("#setUrl").value.trim().replace(/\/$/,""); cfg.tok=$("#setTok").value.trim();
   localStorage.setItem("phdWorkerUrl",cfg.url); localStorage.setItem("phdWorkerTok",cfg.tok);
@@ -878,7 +1322,7 @@ $("#importFile").onchange=e=>{
 $("#wipeBtn").onclick=()=>{ if(confirm("Erase all tracking data on this device? (Remote KV copy is untouched)")){ localStorage.removeItem("phdState"); state={profs:{},unis:{},dates:{},v:1}; render(); toast("Local data cleared"); } };
 
 /* ---------- boot ---------- */
-loadLocal(); render(); setDot(cfg.url?"local":"local"); pullMergePush(false);
+loadLocal(); render(); setDot("local"); pullMergePush(false);
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
