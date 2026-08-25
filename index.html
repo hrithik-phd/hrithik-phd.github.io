@@ -43,6 +43,14 @@ a{color:var(--blue)}
 svg.ic{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 ::selection{background:color-mix(in srgb,var(--amber) 30%,transparent)}
 
+/* ---------- lock screen (casual deterrent only — see index.html comment) ---------- */
+.lockscreen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+.lockscreen.hidden{display:none}
+.lockbox{width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.locktitle{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--ink)}
+.locksub{font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.lockerr{color:var(--red);font-size:12.5px;min-height:16px}
+
 /* ---------- app shell ---------- */
 .app{display:flex;min-height:100vh}
 .side{display:none}
@@ -372,6 +380,19 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 </style>
 </head>
 <body>
+<!-- Casual deterrent only: this is a client-side check, not real security. The data files
+     (data.js/links.js/emails.js/clusters.js) are separate public URLs and remain fetchable
+     directly regardless of this screen. It only stops someone who lands on the page itself
+     from casually browsing it. -->
+<div class="lockscreen" id="lockscreen">
+  <form class="lockbox" id="lockform">
+    <div class="locktitle">PhD Command</div>
+    <div class="locksub">Enter password to continue</div>
+    <input type="password" id="lockpass" autocomplete="current-password" placeholder="Password" autofocus>
+    <button type="submit" class="btn primary">Unlock</button>
+    <div class="lockerr" id="lockerr"></div>
+  </form>
+</div>
 <div class="app">
   <aside class="side">
     <div class="brand">PhD <span>Command</span></div>
@@ -493,6 +514,24 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 <script src="clusters.js"></script>
 <script>
 "use strict";
+(function(){
+  // Casual deterrent only — see the HTML comment above #lockscreen. Not real security:
+  // data.js/links.js/emails.js/clusters.js are separate public URLs, unaffected by this.
+  const LOCK_KEY = "phdLockOk", PASSWORD = "Sagar@21";
+  const screen = document.getElementById("lockscreen");
+  if(localStorage.getItem(LOCK_KEY) === "1"){ screen.classList.add("hidden"); return; }
+  document.getElementById("lockform").addEventListener("submit", e=>{
+    e.preventDefault();
+    const inp = document.getElementById("lockpass");
+    if(inp.value === PASSWORD){
+      localStorage.setItem(LOCK_KEY, "1");
+      screen.classList.add("hidden");
+    } else {
+      document.getElementById("lockerr").textContent = "Wrong password.";
+      inp.value = ""; inp.focus();
+    }
+  });
+})();
 const D = window.PHD_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
