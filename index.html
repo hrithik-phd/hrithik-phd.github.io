@@ -507,31 +507,12 @@ html[data-theme="light"] .modal{background:rgba(50,45,30,.35)}
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="data.js"></script>
-<script src="eccv.js"></script>
-<script src="links.js"></script>
-<script src="emails.js"></script>
-<script src="clusters.js"></script>
-<script>
+<!-- The app's data lives in vault.enc, encrypted with your passphrase (AES-256-GCM,
+     PBKDF2-SHA256 310k). The repo holds only ciphertext; the passphrase is never stored
+     here. The code below stays inert (type="text/plain") until the vault is decrypted,
+     then it is injected as a real script. Regenerate vault.enc with: node encrypt-vault.js -->
+<script type="text/plain" id="appcode">
 "use strict";
-(function(){
-  // Casual deterrent only — see the HTML comment above #lockscreen. Not real security:
-  // data.js/links.js/emails.js/clusters.js are separate public URLs, unaffected by this.
-  const LOCK_KEY = "phdLockOk", PASSWORD = "Sagar@21";
-  const screen = document.getElementById("lockscreen");
-  if(localStorage.getItem(LOCK_KEY) === "1"){ screen.classList.add("hidden"); return; }
-  document.getElementById("lockform").addEventListener("submit", e=>{
-    e.preventDefault();
-    const inp = document.getElementById("lockpass");
-    if(inp.value === PASSWORD){
-      localStorage.setItem(LOCK_KEY, "1");
-      screen.classList.add("hidden");
-    } else {
-      document.getElementById("lockerr").textContent = "Wrong password.";
-      inp.value = ""; inp.focus();
-    }
-  });
-})();
 const D = window.PHD_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -1728,6 +1709,70 @@ try{ const savedView=localStorage.getItem("phdView"); if(savedView && VIEWS.incl
 loadLocal(); render(); setDot("local"); pullMergePush(false);
 restoreScroll(view);
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+
+<script>
+"use strict";
+/* Vault loader: decrypts vault.enc with your passphrase, publishes the data onto
+   window.*, then activates the inert #appcode block above. Nothing sensitive is
+   readable until the correct passphrase derives the key — the repo has ciphertext only. */
+(async function(){
+  const PASS_KEY = "phdVaultPass", ITER = 310000;
+  const screen = document.getElementById("lockscreen");
+  const form   = document.getElementById("lockform");
+  const input  = document.getElementById("lockpass");
+  const errEl  = document.getElementById("lockerr");
+  let vaultBytes = null;
+
+  const b64 = s => { const bin = atob(s.trim()); const u = new Uint8Array(bin.length);
+                     for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; };
+
+  async function vault(){
+    if(vaultBytes) return vaultBytes;
+    const r = await fetch("vault.enc", {cache:"no-cache"});
+    if(!r.ok) throw new Error("Could not load vault.enc");
+    return (vaultBytes = b64(await r.text()));
+  }
+  async function decrypt(pass){
+    const raw  = await vault();
+    const salt = raw.slice(0,16), iv = raw.slice(16,28), body = raw.slice(28);
+    const km   = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+    const key  = await crypto.subtle.deriveKey(
+      {name:"PBKDF2", salt, iterations:ITER, hash:"SHA-256"}, km,
+      {name:"AES-GCM", length:256}, false, ["decrypt"]);
+    const pt   = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, body);
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  function boot(data){
+    Object.keys(data).forEach(k => { window[k] = data[k]; });
+    screen.classList.add("hidden");
+    const s = document.createElement("script");
+    s.textContent = document.getElementById("appcode").textContent;
+    document.body.appendChild(s);
+  }
+
+  // remembered passphrase — silently unlock, and fall back to the prompt if it no longer works
+  let saved = null; try{ saved = localStorage.getItem(PASS_KEY); }catch(e){}
+  if(saved){
+    try { boot(await decrypt(saved)); return; }
+    catch(e){ try{ localStorage.removeItem(PASS_KEY); }catch(_){} }
+  }
+
+  form.addEventListener("submit", async e=>{
+    e.preventDefault();
+    if(!input.value) return;
+    errEl.textContent = "Unlocking…";
+    try{
+      const data = await decrypt(input.value);
+      try{ localStorage.setItem(PASS_KEY, input.value); }catch(_){}
+      boot(data);
+    }catch(err){
+      errEl.textContent = /vault\.enc/.test(err.message) ? err.message : "Wrong password.";
+      input.value = ""; input.focus();
+    }
+  });
+  input.focus();
+})();
 </script>
 </body>
 </html>

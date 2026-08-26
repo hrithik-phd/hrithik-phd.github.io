@@ -1,3 +1,12 @@
 .wrangler/
 node_modules/
 .DS_Store
+
+# Plaintext data — NEVER commit these. They are the unencrypted source for vault.enc,
+# which is what actually ships. Keep them local; regenerate the vault after editing:
+#   node encrypt-vault.js
+data.js
+eccv.js
+links.js
+emails.js
+clusters.js
